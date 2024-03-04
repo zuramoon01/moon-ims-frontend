@@ -5,5 +5,5 @@
 @tailwind utilities;
 
 body {
-	@apply bg-accent-50 text-accent-500 flex min-h-[100vh] w-full;
+	@apply flex min-h-[100vh] w-full bg-accent-50 text-accent-500;
 }
