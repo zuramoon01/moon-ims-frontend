@@ -4,27 +4,23 @@
 >
 	export interface IconProps {
 		name: IconName;
-		width?: string;
-		height?: string;
-		fill?: string;
+		classes?: string;
 	}
 </script>
 
 <script lang="ts">
-	import type { IconName } from "$lib/ui";
-	import { icons } from "$lib/ui";
+	import clsx from "clsx";
+	import { icons, type IconName } from "$lib/ui";
 
 	export let props: IconProps;
-	$: ({ name, width = "24px", height = "24px", fill = "#ffffff" } = props);
+	$: ({ name, classes } = props);
 	$: ({ viewBox, paths } = icons[name]);
 </script>
 
 <svg
 	xmlns="http://www.w3.org/2000/svg"
-	height={height}
 	viewBox={viewBox}
-	width={width}
-	fill={fill}
+	class={clsx(classes || "size-6", "fill-current")}
 >
 	{#if paths && paths.length > 0}
 		{#each paths as { d, fill }, i (i)}
