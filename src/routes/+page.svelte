@@ -2,6 +2,7 @@
 	import clsx from "clsx";
 	import { Button, Checkbox, Icon } from "$lib/ui";
 	import { formatToRupiah } from "$lib/utils";
+	import { productsStore } from "$lib/store";
 
 	const tableTitles = [
 		{
@@ -18,43 +19,16 @@
 			classes: "w-[240px] shrink-0",
 		},
 		{
-			text: "Harga Jual Per Satuan",
-			classes: "w-[240px] shrink-0",
-		},
-		{
 			text: "Total Harga Beli",
 			classes: "w-[200px] shrink-0",
 		},
 		{
+			text: "Harga Jual Per Satuan",
+			classes: "w-[240px] shrink-0",
+		},
+		{
 			text: "Total Harga Jual",
 			classes: "w-[200px] shrink-0",
-		},
-	];
-
-	const products = [
-		{
-			name: "Paku 4 Inch",
-			quantity: 20,
-			buyPrice: 10000,
-			sellPrice: 12000,
-		},
-		{
-			name: "Paku 8 Inch",
-			quantity: 20,
-			buyPrice: 10000,
-			sellPrice: 12000,
-		},
-		{
-			name: "Paku 10 Inch",
-			quantity: 20,
-			buyPrice: 10000,
-			sellPrice: 12000,
-		},
-		{
-			name: "Paku 12 Inch",
-			quantity: 20,
-			buyPrice: 10000,
-			sellPrice: 12000,
 		},
 	];
 </script>
@@ -104,7 +78,7 @@
 				</div>
 			</div>
 
-			{#each products as { name, quantity, buyPrice, sellPrice }, i (i)}
+			{#each $productsStore as { id, name, quantity, buyPriceInRupiah, totalBuyPriceInRupiah, sellPriceInRupiah, totalSellPriceInRupiah }, i (i)}
 				<div class="flex min-h-8 w-full px-4 shadow-horizontal">
 					<div
 						class="flex w-8 shrink-0 items-center justify-center shadow-vertical"
@@ -127,25 +101,25 @@
 					<div
 						class="flex w-[240px] shrink-0 items-center px-4 py-1 shadow-vertical"
 					>
-						<span>{formatToRupiah(buyPrice)}</span>
+						<span>{buyPriceInRupiah}</span>
+					</div>
+
+					<div
+						class="flex w-[200px] shrink-0 items-center px-4 py-1 shadow-vertical"
+					>
+						<span>{totalBuyPriceInRupiah}</span>
 					</div>
 
 					<div
 						class="flex w-[240px] shrink-0 items-center px-4 py-1 shadow-vertical"
 					>
-						<span>{formatToRupiah(sellPrice)}</span>
+						<span>{sellPriceInRupiah}</span>
 					</div>
 
 					<div
 						class="flex w-[200px] shrink-0 items-center px-4 py-1 shadow-vertical"
 					>
-						<span>{formatToRupiah(quantity * buyPrice)}</span>
-					</div>
-
-					<div
-						class="flex w-[200px] shrink-0 items-center px-4 py-1 shadow-vertical"
-					>
-						<span>{formatToRupiah(quantity * sellPrice)}</span>
+						<span>{totalSellPriceInRupiah}</span>
 					</div>
 
 					<div
