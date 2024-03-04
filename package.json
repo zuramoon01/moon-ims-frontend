@@ -2,6 +2,7 @@
 	"name": "moon-inventory-management-system",
 	"version": "0.0.1",
 	"private": true,
+	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -11,6 +12,10 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
 	},
+	"dependencies": {
+		"pg": "^8.11.3",
+		"zod": "^3.22.4"
+	},
 	"devDependencies": {
 		"@melt-ui/pp": "^0.3.0",
 		"@melt-ui/svelte": "^0.75.1",
@@ -18,6 +23,7 @@
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^3.0.0",
 		"@types/eslint": "^8.56.0",
+		"@types/pg": "^8.11.2",
 		"@typescript-eslint/eslint-plugin": "^7.0.0",
 		"@typescript-eslint/parser": "^7.0.0",
 		"autoprefixer": "^10.4.18",
@@ -36,6 +42,5 @@
 		"tslib": "^2.4.1",
 		"typescript": "^5.0.0",
 		"vite": "^5.0.3"
-	},
-	"type": "module"
+	}
 }
