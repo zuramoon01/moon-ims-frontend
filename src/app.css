@@ -3,3 +3,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+	@apply bg-accent-50 text-accent-500 flex min-h-[100vh] w-full;
+}
