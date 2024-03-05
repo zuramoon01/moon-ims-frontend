@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import type { Product } from "$lib/server/db";
+import type { Product } from "$lib/schema";
 import { formatToRupiah } from "$lib/utils";
 
 export type ProductStore = Product & {
@@ -9,8 +9,8 @@ export type ProductStore = Product & {
 	totalSellPriceInRupiah: string;
 };
 
-const createProducts = () => {
-	const { subscribe, set, update } = writable<ProductStore[]>([]);
+const createProductStore = () => {
+	const { subscribe, update } = writable<ProductStore[]>([]);
 
 	const formatProduct = (product: Product) => {
 		return {
@@ -24,33 +24,52 @@ const createProducts = () => {
 
 	return {
 		subscribe,
-		setProducts: (products: Product[]) => {
-			set(products.map((product) => formatProduct(product)));
-		},
-		addProduct: (product: Product) => {
-			update((currentProducts) => {
-				return [...currentProducts, formatProduct(product)];
-			});
-		},
-		updateProduct: (updatedProduct: Product) => {
-			update((currentProducts) => {
-				return currentProducts.map((currentProduct) => {
-					if (currentProduct.id === updatedProduct.id) {
-						return formatProduct(updatedProduct);
-					}
-
-					return currentProduct;
+		set: (products: Product[]) => {
+			update(() => {
+				return products.map((product) => {
+					return formatProduct(product);
 				});
-			});
-		},
-		deleteProduct: (idProduct: Product["id"]) => {
-			update((currentProducts) => {
-				return currentProducts.filter(
-					(currentProduct) => currentProduct.id !== idProduct,
-				);
 			});
 		},
 	};
 };
 
-export const productsStore = createProducts();
+export const productStore = createProductStore();
+
+export const productTableTitles: Array<{
+	id: keyof Omit<Product, "id">;
+	text: string;
+	classes: string;
+}> = [
+	{
+		id: "name",
+		text: "Nama Produk",
+		classes:
+			" min-w-[200px] w-[calc(100%_-_(32px_+_160px_+_240px_+_240px_+_200px_+_200px_+_80px))]",
+	},
+	{
+		id: "quantity",
+		text: "Kuantitas",
+		classes: "w-[160px] shrink-0",
+	},
+	{
+		id: "buyPrice",
+		text: "Harga Beli Per Satuan",
+		classes: "w-[240px] shrink-0",
+	},
+	{
+		id: "totalBuyPrice",
+		text: "Total Harga Beli",
+		classes: "w-[200px] shrink-0",
+	},
+	{
+		id: "sellPrice",
+		text: "Harga Jual Per Satuan",
+		classes: "w-[240px] shrink-0",
+	},
+	{
+		id: "totalSellPrice",
+		text: "Total Harga Jual",
+		classes: "w-[200px] shrink-0",
+	},
+];
