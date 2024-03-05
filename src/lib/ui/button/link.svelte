@@ -2,7 +2,7 @@
 	lang="ts"
 	context="module"
 >
-	export interface ButtonProps extends HTMLButtonAttributes {
+	export interface LinkProps extends HTMLAnchorAttributes {
 		variant?: "filled" | "outline";
 		text?: string;
 		icon?: IconProps;
@@ -10,22 +10,30 @@
 </script>
 
 <script lang="ts">
-	import type { HTMLButtonAttributes } from "svelte/elements";
+	import type { HTMLAnchorAttributes } from "svelte/elements";
 	import clsx from "clsx";
 	import { Icon, type IconProps } from "$lib/ui";
 
-	export let props: ButtonProps;
+	export let props: LinkProps;
 
-	$: ({ variant = "filled", text, icon, class: className, ...attr } = props);
+	$: ({
+		variant = "filled",
+		text,
+		icon,
+		href,
+		class: className,
+		...attr
+	} = props);
 </script>
 
-<button
+<a
 	{...attr}
+	href={href}
 	class={clsx(
 		variant === "filled"
 			? [
 					text && icon && "gap-2",
-					text && "px-4 py-2",
+					text && !icon && "px-4 py-2",
 					"flex items-center justify-center rounded bg-accent-950 text-sm font-semibold leading-none text-accent-50",
 					"hover:bg-accent-800",
 					"active:bg-accent-900",
@@ -49,8 +57,7 @@
 				],
 		className,
 	)}
-	on:click
 	>{#if icon}<Icon
 			props={{ ...icon, classes: icon.classes || "size-4 shrink-0" }}
-		/>{/if}{text || ""}</button
+		/>{/if}{text || ""}</a
 >
