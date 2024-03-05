@@ -4,8 +4,9 @@ export default {
 	theme: {
 		extend: {
 			boxShadow: {
-				vertical: "rgba(242, 242, 242, 0.1) -1px 0px 0px 0px inset",
-				horizontal: "rgba(242, 242, 242, 0.1) 0px -1px 0px 0px inset",
+				border: "rgba(242, 242, 242, 0.1) 0px 0px 0px 1px inset",
+				"border-r": "rgba(242, 242, 242, 0.1) -1px 0px 0px 0px inset",
+				"border-b": "rgba(242, 242, 242, 0.1) 0px -1px 0px 0px inset",
 			},
 			colors: {
 				"havelock-blue": {
