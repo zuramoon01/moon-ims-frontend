@@ -1,4 +1,4 @@
-import { z } from "zod";
+import z from "zod";
 
 export const productSchema = z.object({
   id: z.number(),
@@ -23,4 +23,4 @@ export const productGetAllSchema = z.object({
 });
 
 export type Product = z.infer<typeof productSchema>;
-export type productGetAllSchema = z.infer<typeof productGetAllSchema>;
+export type ProductGetAll = z.infer<typeof productGetAllSchema>;

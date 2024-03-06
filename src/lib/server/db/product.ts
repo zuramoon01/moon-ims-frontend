@@ -1,4 +1,4 @@
-import { z } from "zod";
+import z from "zod";
 import { client } from "$lib/server/db";
 
 export const productSchema = z.object({
