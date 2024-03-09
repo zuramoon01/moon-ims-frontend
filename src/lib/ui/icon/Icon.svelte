@@ -13,6 +13,7 @@
   import { icons, type IconName } from "$lib/ui";
 
   export let props: IconProps;
+
   $: ({ name, classes } = props);
   $: ({ viewBox, paths } = icons[name]);
 </script>

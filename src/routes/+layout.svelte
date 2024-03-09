@@ -1,7 +1,10 @@
 <script lang="ts">
-  import { Sidebar } from "$lib/ui";
+  import { Sidebar, Toast } from "$lib/ui";
+
   import "../app.css";
 </script>
+
+<Toast />
 
 <Sidebar />
 

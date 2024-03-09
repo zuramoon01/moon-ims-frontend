@@ -1,12 +1,12 @@
 <script lang="ts">
-  import clsx from "clsx";
   import { createCheckbox, melt } from "@melt-ui/svelte";
+  import clsx from "clsx";
   import { Icon } from "$lib/ui";
 
   const {
-    elements: { root, input },
+    elements: { input, root },
     helpers: { isChecked, isIndeterminate },
-  } = createCheckbox({});
+  } = createCheckbox();
 </script>
 
 <button

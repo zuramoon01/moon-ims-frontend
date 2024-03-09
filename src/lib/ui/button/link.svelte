@@ -33,7 +33,7 @@
     variant === "filled"
       ? [
           text && icon && "gap-2",
-          text && !icon && "px-4 py-2",
+          text && "h-8 px-4 py-2",
           "flex items-center justify-center rounded bg-accent-950 text-sm font-semibold leading-none text-accent-50",
           "hover:bg-accent-800",
           "active:bg-accent-900",
@@ -45,7 +45,7 @@
         ]
       : [
           text && icon && "gap-2",
-          text && !icon && "px-4 py-2",
+          text && "h-8 px-4 py-2",
           "flex items-center justify-center rounded bg-accent-50 text-sm font-semibold leading-none text-accent-950 shadow-border",
           "hover:bg-accent-200",
           "active:bg-accent-100",
