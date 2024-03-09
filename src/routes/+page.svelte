@@ -1,152 +1,102 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import { melt } from "@melt-ui/svelte";
   import clsx from "clsx";
-  import { Button, Checkbox, Icon } from "$lib/ui";
+  // prettier-ignore
   import {
-    productGetAllSchema,
+    productStore,
+    productTableTitles,
+
+    ProductDialog,
+    productDialogOpen,
+    productDialogPortalled,
+    productDialogTrigger,
+    
+    searchParamsProductSchema,
+
+    productGetAllResponseSchema,
+
+    productDeleteAckSchema,
+    
     type Product,
-    type ProductGetAll,
-  } from "$lib/schema";
-  import { Route, formatToRupiah, handleError } from "$lib/utils";
+  } from "$lib/entity";
+  import { Button, Checkbox, Icon, addToast } from "$lib/ui";
+  import { Route, handleError, socket } from "$lib/util";
 
-  type FormattedProduct = Product & {
-    buyPriceInRupiah: string;
-    totalBuyPriceInRupiah: string;
-    sellPriceInRupiah: string;
-    totalSellPriceInRupiah: string;
-  };
+  let pageState: "idle" | "loading" = "loading";
 
-  let products: FormattedProduct[] = [];
-  let configProduct: Omit<ProductGetAll["data"], "products"> & {
-    currentPageInString: string;
-    limitInString: string;
-  } = {
-    currentPage: 0,
-    currentPageInString: "0",
-    totalPage: 0,
-    from: 0,
-    to: 0,
-    limit: 0,
-    limitInString: "0",
-    total: 0,
-  };
   $: ({
     currentPage,
     currentPageInString,
     totalPage,
     from,
     to,
-    limit,
     limitInString,
     total,
-  } = configProduct);
+    orderByKey,
+    sortDirection,
+  } = $productStore.config);
 
-  const formatProduct = (product: Product) => {
-    return {
-      ...product,
-      buyPriceInRupiah: formatToRupiah(product.buyPrice),
-      totalBuyPriceInRupiah: formatToRupiah(product.totalBuyPrice),
-      sellPriceInRupiah: formatToRupiah(product.sellPrice),
-      totalSellPriceInRupiah: formatToRupiah(product.totalSellPrice),
-    };
+  const getSearchParamsProduct = () => {
+    try {
+      return searchParamsProductSchema.parse({
+        page: $page.url.searchParams.get("page"),
+        limit: $page.url.searchParams.get("limit"),
+      });
+    } catch (error) {
+      return {
+        page: 1,
+        limit: 15,
+      };
+    }
   };
 
   const getProducts = async () => {
     try {
-      const searchParamsProduct = new URLSearchParams(
-        Array.from($page.url.searchParams.entries()),
-      ).toString();
-      const urlApiProduct = `${Route.Api.Product}?${searchParamsProduct}`;
-      const response = await fetch(urlApiProduct, {
-        method: "GET",
-      });
+      const response = await socket.emitWithAck(
+        "product:getAll",
+        getSearchParamsProduct(),
+      );
 
-      const productGetAll = productGetAllSchema.parse(await response.json());
-      const {
-        products: productsRaw,
-        currentPage,
-        limit,
-        ..._configProduct
-      } = productGetAll.data;
+      const { data, message } = productGetAllResponseSchema.parse(response);
 
-      products = productsRaw.map((product) => {
-        return formatProduct(product);
-      });
-      configProduct = {
-        ..._configProduct,
-        currentPage,
-        currentPageInString: currentPage.toString(),
-        limit,
-        limitInString: limit.toString(),
-      };
+      if (data) {
+        productStore.setProductStore(data);
+
+        await tick();
+
+        inputLimit = $productStore.config.limitInString;
+        inputPage = $productStore.config.currentPageInString;
+      } else if (message) {
+        addToast({
+          data: {
+            state: "Error",
+            message: message,
+          },
+        });
+      }
     } catch (error) {
-      handleError(error, "Fungsi getProducts, Halaman Produk");
+      handleError(error, "Fungsi getProducts Halaman Produk");
     }
   };
 
-  const productTableTitles: Array<{
-    key: keyof Omit<Product, "id">;
-    text: string;
-    classes: string;
-  }> = [
-    {
-      key: "name",
-      text: "Nama Produk",
-      classes:
-        " min-w-[200px] w-[calc(100%_-_(32px_+_160px_+_240px_+_240px_+_200px_+_200px_+_80px))]",
-    },
-    {
-      key: "quantity",
-      text: "Kuantitas",
-      classes: "w-[160px] shrink-0",
-    },
-    {
-      key: "buyPrice",
-      text: "Harga Beli Per Satuan",
-      classes: "w-[240px] shrink-0",
-    },
-    {
-      key: "totalBuyPrice",
-      text: "Total Harga Beli",
-      classes: "w-[200px] shrink-0",
-    },
-    {
-      key: "sellPrice",
-      text: "Harga Jual Per Satuan",
-      classes: "w-[240px] shrink-0",
-    },
-    {
-      key: "totalSellPrice",
-      text: "Total Harga Jual",
-      classes: "w-[200px] shrink-0",
-    },
-  ];
+  const deleteProduct = async (id: Product["id"]) => {
+    try {
+      const response = await socket.emitWithAck("product:delete", id);
 
-  let orderByKey: keyof Omit<Product, "id"> | null = null;
-  let sortDirection: "ASC" | "DESC" = "DESC";
+      const { success, message } = productDeleteAckSchema.parse(response);
 
-  const sortProducts = (key: keyof Omit<Product, "id">) => {
-    if (key !== orderByKey) {
-      orderByKey = key;
-      sortDirection = "DESC";
-    } else if (sortDirection === "ASC") {
-      orderByKey = null;
-    } else {
-      sortDirection = "ASC";
+      addToast({
+        data: {
+          state: success ? "Sukses" : "Error",
+          message,
+        },
+      });
+    } catch (error) {
+      handleError(error, "Fungsi getProducts Halaman Produk");
     }
-
-    products = products.sort((a, b) => {
-      const [x, y] =
-        orderByKey === null ? [a.id, b.id] : [a[orderByKey], b[orderByKey]];
-
-      if (sortDirection === "ASC") {
-        return x > y ? -1 : x < y ? 1 : 0;
-      } else {
-        return x < y ? -1 : x > y ? 1 : 0;
-      }
-    });
   };
 
   const updateProductPage = async (params: { page: string; limit: string }) => {
@@ -157,6 +107,8 @@
     await getProducts();
   };
 
+  let inputPage = "0";
+  let inputLimit = "0";
   const handleInput = async (
     e: KeyboardEvent & {
       currentTarget: EventTarget & HTMLInputElement;
@@ -181,8 +133,6 @@
       params[param] = value.toString();
 
       await updateProductPage(params);
-
-      await getProducts();
     }
   };
 
@@ -196,11 +146,13 @@
       limit: limitInString,
     };
     await updateProductPage(params);
-
-    await getProducts();
   };
 
   onMount(async () => {
+    socket.on("product:getAll", async () => {
+      await getProducts();
+    });
+
     const { search } = $page.url;
 
     if (search === "") {
@@ -214,6 +166,8 @@
     }
 
     await getProducts();
+
+    pageState = "idle";
   });
 </script>
 
@@ -223,21 +177,60 @@
 
 <main class="flex w-[calc(100%_-_theme(spacing.sidebar))] flex-col items-start">
   <section class="flex w-full flex-col items-start px-8">
+    <div use:melt={$productDialogPortalled}>
+      {#if $productDialogOpen}
+        <ProductDialog />
+      {/if}
+    </div>
+
     <header
       class="flex h-[64px] w-full items-center justify-between px-4 text-accent-950"
     >
       <h1 class="text-xl font-bold leading-none">Produk</h1>
 
-      <Button
-        props={{
-          type: "button",
-          text: "Tambah Produk",
-          icon: { name: "plus" },
+      <button
+        use:melt={$productDialogTrigger}
+        class={clsx([
+          "flex h-8 items-center justify-center gap-2 rounded bg-accent-950 px-4 py-2 text-sm font-semibold leading-none text-accent-50",
+          "hover:bg-accent-800",
+          "active:bg-accent-900",
+          "focus:bg-accent-900",
+          "disabled:cursor-not-allowed disabled:bg-accent-300 disabled:text-accent-600",
+          "disabled:hover:bg-accent-950",
+          "disabled:active:bg-accent-950",
+          "disabled:focus:bg-accent-950",
+        ])}
+        on:m-click={async (e) => {
+          productStore.updateDialog({
+            id: undefined,
+            name: undefined,
+            quantity: 1,
+            buyPrice: undefined,
+            sellPrice: undefined,
+          });
+
+          await tick();
         }}
-      />
+      >
+        <Icon props={{ name: "plus", classes: "size-4 shrink-0" }} />
+
+        Tambah Produk
+      </button>
     </header>
 
-    {#if total > 0}
+    {#if pageState === "loading" || total <= 0}
+      <div class="flex w-full items-center justify-center">
+        <div
+          class="flex size-10 items-center justify-center rounded-full bg-white"
+        >
+          <div class="size-8 rounded-full bg-black"></div>
+        </div>
+
+        <div
+          class="top- absolute size-10 rounded-[50%] border border-[#cfd0d1] border-b-[#1c87c9]"
+        ></div>
+      </div>
+    {:else}
       <div
         class="flex w-full flex-col items-start overflow-auto text-sm leading-none"
       >
@@ -260,7 +253,7 @@
                 classes,
               )}
               on:click={() => {
-                sortProducts(key);
+                productStore.sortProducts(key);
               }}
             >
               <span>{text}</span>
@@ -282,7 +275,7 @@
           </div>
         </div>
 
-        {#each products as { id, name, quantity, buyPriceInRupiah, totalBuyPriceInRupiah, sellPriceInRupiah, totalSellPriceInRupiah } (id)}
+        {#each $productStore.data as { id, name, quantity, buyPrice, buyPriceInRupiah, totalBuyPriceInRupiah, sellPrice, sellPriceInRupiah, totalSellPriceInRupiah } (id)}
           <div
             class={clsx(
               "flex min-h-8 w-full px-4 shadow-border-b",
@@ -334,16 +327,37 @@
             <div
               class="flex w-[80px] shrink-0 items-center justify-center gap-1 px-4"
             >
-              <div class="rounded bg-accent-200 p-1">
+              <button
+                use:melt={$productDialogTrigger}
+                class="rounded bg-accent-200 p-1"
+                on:m-click={async (e) => {
+                  productStore.updateDialog({
+                    id,
+                    name,
+                    quantity,
+                    buyPrice,
+                    sellPrice,
+                  });
+
+                  await tick();
+                }}
+              >
                 <Icon
                   props={{
                     name: "edit",
                     classes: clsx("size-4 text-yellow-500"),
                   }}
                 />
-              </div>
+              </button>
 
-              <div class="rounded bg-accent-200 p-1">
+              <!-- svelte-ignore a11y-click-events-have-key-events -->
+              <!-- svelte-ignore a11y-no-static-element-interactions -->
+              <div
+                class="cursor-pointer rounded bg-accent-200 p-1"
+                on:click={() => {
+                  deleteProduct(id);
+                }}
+              >
                 <Icon
                   props={{
                     name: "delete",
@@ -364,7 +378,7 @@
             type="number"
             min="1"
             max="25"
-            value={limit}
+            bind:value={inputLimit}
             class={clsx(
               "flex h-6 w-10 items-center justify-center rounded bg-accent-50 px-2 text-center text-sm font-medium leading-none shadow-border",
             )}
@@ -385,7 +399,7 @@
             type="number"
             min="1"
             max={totalPage}
-            value={currentPage}
+            bind:value={inputPage}
             class={clsx(
               "flex h-6 w-10 items-center justify-center rounded bg-accent-50 px-2 text-center text-sm font-medium leading-none shadow-border",
             )}
