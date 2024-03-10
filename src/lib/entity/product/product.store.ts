@@ -92,36 +92,42 @@ const createProductStore = () => {
     },
     sortProducts: (key: OrderByKey) => {
       update((currentState) => {
-        const {
+        let {
           data,
           config: { orderByKey, sortDirection },
         } = currentState;
 
-        let newConfig = currentState.config;
-
         if (key !== orderByKey) {
-          newConfig = { ...newConfig, orderByKey: key, sortDirection: "DESC" };
+          orderByKey = key;
+          sortDirection = "DESC";
         } else if (sortDirection === "ASC") {
-          newConfig.orderByKey = null;
+          orderByKey = null;
+          sortDirection = "DESC";
         } else {
-          newConfig.sortDirection = "ASC";
+          sortDirection = "ASC";
         }
 
-        const newData = data.sort((a, b) => {
-          const [x, y] =
-            orderByKey === null ? [a.id, b.id] : [a[orderByKey], b[orderByKey]];
-
-          if (sortDirection === "ASC") {
-            return x > y ? -1 : x < y ? 1 : 0;
-          } else {
-            return x < y ? -1 : x > y ? 1 : 0;
-          }
-        });
+        console.log({ data, orderByKey, sortDirection });
 
         return {
           ...currentState,
-          data: newData,
-          config: newConfig,
+          data: data.sort((a, b) => {
+            const [x, y] =
+              orderByKey === null
+                ? [a.id, b.id]
+                : [a[orderByKey], b[orderByKey]];
+
+            if (sortDirection === "ASC") {
+              return x < y ? -1 : x > y ? 1 : 0;
+            } else {
+              return x > y ? -1 : x < y ? 1 : 0;
+            }
+          }),
+          config: {
+            ...currentState.config,
+            orderByKey,
+            sortDirection,
+          },
         };
       });
     },

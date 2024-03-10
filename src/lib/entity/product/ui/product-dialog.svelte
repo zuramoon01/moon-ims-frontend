@@ -16,6 +16,7 @@
 </script>
 
 <script lang="ts">
+  import { tick } from "svelte";
   import { page } from "$app/stores";
   import { createDialog, melt } from "@melt-ui/svelte";
   import clsx from "clsx";
@@ -92,6 +93,8 @@
 
             productStore.setProductStore(productsWithConfig);
 
+            await tick();
+
             addToast({
               data: {
                 state: "Sukses",
@@ -145,6 +148,8 @@
             );
 
             productStore.setProductStore(productsWithConfig);
+
+            await tick();
 
             addToast({
               data: {

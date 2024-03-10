@@ -152,6 +152,8 @@
       await updateProductPage(params);
 
       await getProducts();
+
+      await tick();
     }
   };
 
@@ -169,6 +171,8 @@
     await updateProductPage(params);
 
     await getProducts();
+
+    await tick();
   };
 
   let getProductsInterval: NodeJS.Timeout;
@@ -187,9 +191,13 @@
 
     await getProducts();
 
+    await tick();
+
     getProductsInterval = setInterval(
       async () => {
         await getProducts();
+
+        await tick();
       },
       30 * 60 * 1000,
     );
@@ -283,8 +291,10 @@
                 "hover:bg-accent-100",
                 classes,
               )}
-              on:click={() => {
+              on:click={async () => {
                 productStore.sortProducts(key);
+
+                await tick();
               }}
             >
               <span>{text}</span>
