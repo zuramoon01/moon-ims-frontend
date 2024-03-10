@@ -16,17 +16,13 @@
 </script>
 
 <script lang="ts">
+  import { page } from "$app/stores";
   import { createDialog, melt } from "@melt-ui/svelte";
   import clsx from "clsx";
-  // prettier-ignore
-  import {
-    productStore,
-    
-    productAddAckSchema,
-    productUpdateAckSchema,
-  } from "$lib/entity";
+  import { PUBLIC_BACKEND_URL } from "$env/static/public";
+  import { productStore, productsWithConfigSchema } from "$lib/entity";
   import { Icon, addToast } from "$lib/ui";
-  import { handleError, socket } from "$lib/util";
+  import { Route, handleError, messageSchema } from "$lib/util";
 
   let input = {
     id: $productStore.dialog.id,
@@ -55,43 +51,109 @@
 
     if (!id) {
       try {
-        const response = await socket.emitWithAck("product:add", {
-          name,
-          quantity,
-          buyPrice,
-          sellPrice,
-        });
+        const searchParamsProduct = new URLSearchParams(
+          Array.from($page.url.searchParams.entries()),
+        ).toString();
 
-        const { success, message } = productAddAckSchema.parse(response);
+        const urlApiProduct = new URL(
+          `${Route.Api.Product}?${searchParamsProduct}`,
+          PUBLIC_BACKEND_URL,
+        );
 
-        console.log({ success, add: "add" });
-
-        addToast({
-          data: {
-            state: success ? "Sukses" : "Error",
-            message,
+        const response = await fetch(urlApiProduct, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            name,
+            quantity,
+            buyPrice,
+            sellPrice,
+          }),
         });
+
+        const data = await response.json();
+
+        if (data.message) {
+          const message = messageSchema.parse(data.message);
+
+          if (response.status === 400) {
+            addToast({
+              data: {
+                state: "Error",
+                message,
+              },
+            });
+          } else if (response.status === 201 && data.data) {
+            const productsWithConfig = productsWithConfigSchema.parse(
+              data.data,
+            );
+
+            productStore.setProductStore(productsWithConfig);
+
+            addToast({
+              data: {
+                state: "Sukses",
+                message,
+              },
+            });
+          }
+        }
       } catch (error) {
         handleError(error, "Fungsi submitProduct add Halaman Produk");
       }
     } else {
       try {
-        const response = await socket.emitWithAck("product:update", id, {
-          name,
-          quantity,
-          buyPrice,
-          sellPrice,
-        });
+        const searchParamsProduct = new URLSearchParams(
+          Array.from($page.url.searchParams.entries()),
+        ).toString();
 
-        const { success, message } = productUpdateAckSchema.parse(response);
+        const urlApiProduct = new URL(
+          `${Route.Api.Product}/${id}?${searchParamsProduct}`,
+          PUBLIC_BACKEND_URL,
+        );
 
-        addToast({
-          data: {
-            state: success ? "Sukses" : "Error",
-            message,
+        const response = await fetch(urlApiProduct, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            name,
+            quantity,
+            buyPrice,
+            sellPrice,
+          }),
         });
+
+        const data = await response.json();
+
+        if (data.message) {
+          const message = messageSchema.parse(data.message);
+
+          if (response.status === 400) {
+            addToast({
+              data: {
+                state: "Error",
+                message,
+              },
+            });
+          } else if (response.status === 200 && data.data) {
+            const productsWithConfig = productsWithConfigSchema.parse(
+              data.data,
+            );
+
+            productStore.setProductStore(productsWithConfig);
+
+            addToast({
+              data: {
+                state: "Sukses",
+                message,
+              },
+            });
+          }
+        }
       } catch (error) {
         handleError(error, "Fungsi submitProduct update Halaman Produk");
       }

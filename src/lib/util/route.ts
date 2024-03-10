@@ -1,6 +1,6 @@
 export const Route = {
   Product: "/",
   Api: {
-    Product: "/api/products",
+    Product: "/api/v1/products",
   },
 } as const;

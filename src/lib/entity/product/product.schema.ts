@@ -17,7 +17,7 @@ export type NewOrUpdateProduct = Omit<
   "id" | "totalBuyPrice" | "totalSellPrice"
 >;
 
-const productWithConfigSchema = z.object({
+export const productsWithConfigSchema = z.object({
   products: productsSchema,
   currentPage: z.number(),
   totalPage: z.number(),
@@ -32,21 +32,3 @@ export const searchParamsProductSchema = z.object({
   limit: z.coerce.number().min(1).max(25).default(15),
 });
 export type SearchParamsProduct = z.infer<typeof searchParamsProductSchema>;
-
-export const productGetAllResponseSchema = z.object({
-  data: productWithConfigSchema.optional(),
-  message: z.string().optional(),
-});
-
-export const productAddAckSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
-export const productUpdateAckSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
-export const productDeleteAckSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});

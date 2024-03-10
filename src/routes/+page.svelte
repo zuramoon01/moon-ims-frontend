@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onDestroy, onMount, tick } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import { melt } from "@melt-ui/svelte";
   import clsx from "clsx";
+  import { PUBLIC_BACKEND_URL } from "$env/static/public";
   // prettier-ignore
   import {
     productStore,
@@ -13,17 +14,13 @@
     productDialogOpen,
     productDialogPortalled,
     productDialogTrigger,
-    
-    searchParamsProductSchema,
 
-    productGetAllResponseSchema,
-
-    productDeleteAckSchema,
+    productsWithConfigSchema,
     
     type Product,
   } from "$lib/entity";
   import { Button, Checkbox, Icon, addToast } from "$lib/ui";
-  import { Route, handleError, socket } from "$lib/util";
+  import { Route, handleError, messageSchema } from "$lib/util";
 
   let pageState: "idle" | "loading" = "loading";
 
@@ -39,43 +36,41 @@
     sortDirection,
   } = $productStore.config);
 
-  const getSearchParamsProduct = () => {
-    try {
-      return searchParamsProductSchema.parse({
-        page: $page.url.searchParams.get("page"),
-        limit: $page.url.searchParams.get("limit"),
-      });
-    } catch (error) {
-      return {
-        page: 1,
-        limit: 15,
-      };
-    }
-  };
-
   const getProducts = async () => {
     try {
-      const response = await socket.emitWithAck(
-        "product:getAll",
-        getSearchParamsProduct(),
+      const searchParamsProduct = new URLSearchParams(
+        Array.from($page.url.searchParams.entries()),
+      ).toString();
+
+      const urlApiProduct = new URL(
+        `${Route.Api.Product}?${searchParamsProduct}`,
+        PUBLIC_BACKEND_URL,
       );
 
-      const { data, message } = productGetAllResponseSchema.parse(response);
+      const response = await fetch(urlApiProduct, {
+        method: "GET",
+      });
 
-      if (data) {
-        productStore.setProductStore(data);
+      const data = await response.json();
 
-        await tick();
+      if (response.status === 400 && data.message) {
+        const message = messageSchema.parse(data.message);
 
-        inputLimit = $productStore.config.limitInString;
-        inputPage = $productStore.config.currentPageInString;
-      } else if (message) {
         addToast({
           data: {
             state: "Error",
             message: message,
           },
         });
+      } else if (response.status === 200 && data.data) {
+        const productsWithConfig = productsWithConfigSchema.parse(data.data);
+
+        productStore.setProductStore(productsWithConfig);
+
+        await tick();
+
+        inputLimit = $productStore.config.limitInString;
+        inputPage = $productStore.config.currentPageInString;
       }
     } catch (error) {
       handleError(error, "Fungsi getProducts Halaman Produk");
@@ -84,16 +79,40 @@
 
   const deleteProduct = async (id: Product["id"]) => {
     try {
-      const response = await socket.emitWithAck("product:delete", id);
+      const searchParamsProduct = new URLSearchParams(
+        Array.from($page.url.searchParams.entries()),
+      ).toString();
 
-      const { success, message } = productDeleteAckSchema.parse(response);
+      const urlApiProduct = new URL(
+        `${Route.Api.Product}/${id}?${searchParamsProduct}`,
+        PUBLIC_BACKEND_URL,
+      );
 
-      addToast({
-        data: {
-          state: success ? "Sukses" : "Error",
-          message,
-        },
+      const response = await fetch(urlApiProduct, {
+        method: "DELETE",
       });
+
+      const data = await response.json();
+
+      if (data.message) {
+        const message = messageSchema.parse(data.message);
+
+        if (response.status === 400) {
+          addToast({
+            data: {
+              state: "Error",
+              message,
+            },
+          });
+        } else if (response.status === 200) {
+          addToast({
+            data: {
+              state: "Sukses",
+              message,
+            },
+          });
+        }
+      }
     } catch (error) {
       handleError(error, "Fungsi getProducts Halaman Produk");
     }
@@ -103,8 +122,6 @@
     const searchParamsProduct = new URLSearchParams(params).toString();
     const urlProduct = `${Route.Product}?${searchParamsProduct}`;
     await goto(urlProduct);
-
-    await getProducts();
   };
 
   let inputPage = "0";
@@ -133,6 +150,8 @@
       params[param] = value.toString();
 
       await updateProductPage(params);
+
+      await getProducts();
     }
   };
 
@@ -141,18 +160,20 @@
       step === "next"
         ? Math.min(totalPage, currentPage + 1)
         : Math.max(1, currentPage - 1);
+
     const params = {
       page: newPage.toString(),
       limit: limitInString,
     };
+
     await updateProductPage(params);
+
+    await getProducts();
   };
 
-  onMount(async () => {
-    socket.on("product:getAll", async () => {
-      await getProducts();
-    });
+  let getProductsInterval: NodeJS.Timeout;
 
+  onMount(async () => {
     const { search } = $page.url;
 
     if (search === "") {
@@ -160,14 +181,24 @@
         page: "1",
         limit: "15",
       };
-      await updateProductPage(params);
 
-      return;
+      await updateProductPage(params);
     }
 
     await getProducts();
 
+    getProductsInterval = setInterval(
+      async () => {
+        await getProducts();
+      },
+      30 * 60 * 1000,
+    );
+
     pageState = "idle";
+  });
+
+  onDestroy(() => {
+    clearInterval(getProductsInterval);
   });
 </script>
 

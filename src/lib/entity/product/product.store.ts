@@ -90,14 +90,6 @@ const createProductStore = () => {
         };
       });
     },
-    addProduct: (product: Product) => {
-      update((currentState) => {
-        return {
-          ...currentState,
-          data: [...currentState.data, formatProduct(product)],
-        };
-      });
-    },
     sortProducts: (key: OrderByKey) => {
       update((currentState) => {
         const {
@@ -130,17 +122,6 @@ const createProductStore = () => {
           ...currentState,
           data: newData,
           config: newConfig,
-        };
-      });
-    },
-    // updateProducts: (products: Product) => {
-    //   update((currentState) => {});
-    // },
-    deleteProduct: (id: Product["id"]) => {
-      update((currentState) => {
-        return {
-          ...currentState,
-          data: currentState.data.filter((product) => product.id !== id),
         };
       });
     },
