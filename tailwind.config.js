@@ -4,9 +4,17 @@ export default {
   theme: {
     extend: {
       boxShadow: {
-        border: "rgba(242, 242, 242, 0.1) 0px 0px 0px 1px inset",
-        "border-r": "rgba(242, 242, 242, 0.1) -1px 0px 0px 0px inset",
-        "border-b": "rgba(242, 242, 242, 0.1) 0px -1px 0px 0px inset",
+        border: "rgba(242, 242, 242, 0.1) 0px 0px 0px 1px",
+        "border-t": "rgba(242, 242, 242, 0.1) 0px 1px 0px 0px",
+        "border-b": "rgba(242, 242, 242, 0.1) 0px -1px 0px 0px",
+        "border-l": "rgba(242, 242, 242, 0.1) 1px 0px 0px 0px",
+        "border-r": "rgba(242, 242, 242, 0.1) -1px 0px 0px 0px",
+        "border-inner": "rgba(242, 242, 242, 0.1) 0px 0px 0px 1px inset",
+        "border-inner-t": "rgba(242, 242, 242, 0.1) 0px 1px 0px 0px inset",
+        "border-inner-b": "rgba(242, 242, 242, 0.1) 0px -1px 0px 0px inset",
+        "border-inner-br": "rgba(242, 242, 242, 0.1) -1px -1px 0px 0px inset",
+        "border-inner-l": "rgba(242, 242, 242, 0.1) 1px 0px 0px 0px inset",
+        "border-inner-r": "rgba(242, 242, 242, 0.1) -1px 0px 0px 0px inset",
       },
       colors: {
         "havelock-blue": {
