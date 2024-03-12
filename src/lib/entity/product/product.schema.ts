@@ -32,3 +32,11 @@ export const searchParamsProductSchema = z.object({
   limit: z.coerce.number().min(1).max(25).default(15),
 });
 export type SearchParamsProduct = z.infer<typeof searchParamsProductSchema>;
+
+export const productDialogSchema = z.object({
+  id: z.number().optional(),
+  name: z.string(),
+  quantity: z.coerce.number(),
+  buyPrice: z.coerce.number(),
+  sellPrice: z.coerce.number(),
+});

@@ -1,26 +1,26 @@
 <script lang="ts">
-  import { onDestroy, onMount, tick } from "svelte";
+  import { onDestroy, onMount, setContext, tick } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import { fade } from "svelte/transition";
+  import { cubicInOut } from "svelte/easing";
   import { melt } from "@melt-ui/svelte";
   import clsx from "clsx";
-  import { PUBLIC_BACKEND_URL } from "$env/static/public";
-  // prettier-ignore
   import {
     productStore,
     productTableTitles,
-
-    ProductDialog,
-    productDialogOpen,
-    productDialogPortalled,
-    productDialogTrigger,
-
+    ProductAddOrUpdateDialog,
+    productAddOrUpdateDialogTrigger,
+    productAddOrUpdateDialogOpen,
+    productAddOrUpdateDialogPortalled,
+    ProductConfirmationDeleteDialog,
+    productConfirmationDeleteDialogTrigger,
+    productConfirmationDeleteDialogOpen,
+    productConfirmationDeleteDialogPortalled,
     productsWithConfigSchema,
-    
-    type Product,
   } from "$lib/entity";
-  import { Button, Checkbox, Icon, addToast } from "$lib/ui";
-  import { Route, handleError, messageSchema } from "$lib/util";
+  import { apiMoonIMS, appStore, handleError, Route } from "$lib/util";
+  import { Button, Checkbox, CircleLoader, Icon } from "$lib/ui";
 
   let pageState: "idle" | "loading" = "loading";
 
@@ -36,33 +36,33 @@
     sortDirection,
   } = $productStore.config);
 
-  const getProducts = async () => {
-    try {
-      const searchParamsProduct = new URLSearchParams(
-        Array.from($page.url.searchParams.entries()),
-      ).toString();
+  $: ({ showSidebar } = $appStore);
 
-      const urlApiProduct = new URL(
+  $: totalProducts = $productStore.data.length;
+  $: totalSelectedProductIds = $productStore.selectedProductIds.length;
+  let footerHeight = 0;
+
+  const generateSearchParamsProduct = () => {
+    return new URLSearchParams(
+      Array.from($page.url.searchParams.entries()),
+    ).toString();
+  };
+
+  setContext("productContext", {
+    generateSearchParamsProduct,
+  });
+
+  const getProducts = async () => {
+    pageState = "loading";
+
+    try {
+      const searchParamsProduct = generateSearchParamsProduct();
+
+      const { status, data } = await apiMoonIMS.get(
         `${Route.Api.Product}?${searchParamsProduct}`,
-        PUBLIC_BACKEND_URL,
       );
 
-      const response = await fetch(urlApiProduct, {
-        method: "GET",
-      });
-
-      const data = await response.json();
-
-      if (response.status === 400 && data.message) {
-        const message = messageSchema.parse(data.message);
-
-        addToast({
-          data: {
-            state: "Error",
-            message: message,
-          },
-        });
-      } else if (response.status === 200 && data.data) {
+      if (status === 200 && data.data) {
         const productsWithConfig = productsWithConfigSchema.parse(data.data);
 
         productStore.setProductStore(productsWithConfig);
@@ -75,47 +75,8 @@
     } catch (error) {
       handleError(error, "Fungsi getProducts Halaman Produk");
     }
-  };
 
-  const deleteProduct = async (id: Product["id"]) => {
-    try {
-      const searchParamsProduct = new URLSearchParams(
-        Array.from($page.url.searchParams.entries()),
-      ).toString();
-
-      const urlApiProduct = new URL(
-        `${Route.Api.Product}/${id}?${searchParamsProduct}`,
-        PUBLIC_BACKEND_URL,
-      );
-
-      const response = await fetch(urlApiProduct, {
-        method: "DELETE",
-      });
-
-      const data = await response.json();
-
-      if (data.message) {
-        const message = messageSchema.parse(data.message);
-
-        if (response.status === 400) {
-          addToast({
-            data: {
-              state: "Error",
-              message,
-            },
-          });
-        } else if (response.status === 200) {
-          addToast({
-            data: {
-              state: "Sukses",
-              message,
-            },
-          });
-        }
-      }
-    } catch (error) {
-      handleError(error, "Fungsi getProducts Halaman Produk");
-    }
+    pageState = "idle";
   };
 
   const updateProductPage = async (params: { page: string; limit: string }) => {
@@ -152,12 +113,12 @@
       await updateProductPage(params);
 
       await getProducts();
-
-      await tick();
     }
   };
 
   const handlePage = async (step: "previous" | "next") => {
+    pageState = "loading";
+
     const newPage =
       step === "next"
         ? Math.min(totalPage, currentPage + 1)
@@ -171,8 +132,6 @@
     await updateProductPage(params);
 
     await getProducts();
-
-    await tick();
   };
 
   let getProductsInterval: NodeJS.Timeout;
@@ -191,18 +150,12 @@
 
     await getProducts();
 
-    await tick();
-
     getProductsInterval = setInterval(
       async () => {
         await getProducts();
-
-        await tick();
       },
       30 * 60 * 1000,
     );
-
-    pageState = "idle";
   });
 
   onDestroy(() => {
@@ -214,276 +167,286 @@
   <title>Admin | Produk</title>
 </svelte:head>
 
-<main class="flex w-[calc(100%_-_theme(spacing.sidebar))] flex-col items-start">
-  <section class="flex w-full flex-col items-start px-8">
-    <div use:melt={$productDialogPortalled}>
-      {#if $productDialogOpen}
-        <ProductDialog />
-      {/if}
-    </div>
+<div use:melt={$productAddOrUpdateDialogPortalled}>
+  {#if $productAddOrUpdateDialogOpen}
+    <ProductAddOrUpdateDialog />
+  {/if}
+</div>
 
-    <header
-      class="flex h-[64px] w-full items-center justify-between px-4 text-accent-950"
-    >
-      <h1 class="text-xl font-bold leading-none">Produk</h1>
+<div use:melt={$productConfirmationDeleteDialogPortalled}>
+  {#if $productConfirmationDeleteDialogOpen}
+    <ProductConfirmationDeleteDialog />
+  {/if}
+</div>
 
-      <button
-        use:melt={$productDialogTrigger}
-        class={clsx([
-          "flex h-8 items-center justify-center gap-2 rounded bg-accent-950 px-4 py-2 text-sm font-semibold leading-none text-accent-50",
-          "hover:bg-accent-800",
-          "active:bg-accent-900",
-          "focus:bg-accent-900",
-          "disabled:cursor-not-allowed disabled:bg-accent-300 disabled:text-accent-600",
-          "disabled:hover:bg-accent-950",
-          "disabled:active:bg-accent-950",
-          "disabled:focus:bg-accent-950",
-        ])}
-        on:m-click={async (e) => {
-          productStore.updateDialog({
-            id: undefined,
-            name: undefined,
-            quantity: 1,
-            buyPrice: undefined,
-            sellPrice: undefined,
-          });
+<div class={clsx("flex w-full flex-col items-start px-4", "md:px-8")}>
+  <header class="flex h-16 w-full items-center justify-between gap-8">
+    <h1 class="text-xl font-bold leading-none text-accent-950">Produk</h1>
 
-          await tick();
+    <div use:melt={$productAddOrUpdateDialogTrigger}>
+      <Button
+        props={{
+          icon: { name: "plus" },
+          class: clsx(
+            showSidebar ? "min-[572px]:hidden" : "min-[379px]:hidden",
+          ),
         }}
-      >
-        <Icon props={{ name: "plus", classes: "size-4 shrink-0" }} />
+      />
+      <Button
+        props={{
+          text: "Tambah Produk",
+          icon: { name: "plus" },
+          class: clsx(
+            showSidebar ? "max-[571px]:hidden" : "max-[378px]:hidden",
+          ),
+        }}
+      />
+    </div>
+  </header>
 
-        Tambah Produk
-      </button>
-    </header>
-
-    {#if pageState === "loading" || total <= 0}
-      <div class="flex w-full items-center justify-center">
+  {#if pageState === "loading" || total <= 0}
+    <div class="flex w-full items-start justify-center">
+      <CircleLoader props={{}} />
+    </div>
+  {:else}
+    <section
+      class="flex w-full flex-col items-start overflow-auto"
+      style={`
+        max-height: calc(100vh - (64px + ${footerHeight}px));
+      `}
+    >
+      <div class="sticky left-0 top-0 flex min-h-[34px] w-full bg-accent-50">
         <div
-          class="flex size-10 items-center justify-center rounded-full bg-white"
+          class="flex min-w-8 items-center justify-center shadow-border-inner-br"
         >
-          <div class="size-8 rounded-full bg-black"></div>
+          <Checkbox
+            props={{
+              value:
+                totalSelectedProductIds === 0
+                  ? false
+                  : totalSelectedProductIds === totalProducts
+                    ? true
+                    : "indeterminate",
+            }}
+            on:click={productStore.toggleAllSelectedProductId}
+          />
         </div>
 
-        <div
-          class="top- absolute size-10 rounded-[50%] border border-[#cfd0d1] border-b-[#1c87c9]"
-        ></div>
-      </div>
-    {:else}
-      <div
-        class="flex w-full flex-col items-start overflow-auto text-sm leading-none"
-      >
-        <div
-          class="flex h-8 w-full px-4 font-semibold text-accent-950 shadow-border-b"
-        >
-          <div
-            class="flex w-8 shrink-0 items-center justify-center shadow-border-r"
-          >
-            <Checkbox />
-          </div>
-
-          {#each productTableTitles as { key, text, classes } (key)}
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <!-- svelte-ignore a11y-no-static-element-interactions -->
-            <div
-              class={clsx(
-                "flex cursor-pointer items-center justify-between px-4 shadow-border-r",
-                "hover:bg-accent-100",
-                classes,
-              )}
-              on:click={async () => {
-                productStore.sortProducts(key);
-
-                await tick();
-              }}
-            >
-              <span>{text}</span>
-
-              {#if orderByKey === key}
-                <Icon
-                  props={{
-                    name:
-                      sortDirection === "ASC" ? "arrowDropUp" : "arrowDropDown",
-                    classes: clsx("size-5"),
-                  }}
-                />
-              {/if}
-            </div>
-          {/each}
-
-          <div class="flex w-20 shrink-0 items-center justify-center px-4">
-            <span class="text-center">Aksi</span>
-          </div>
-        </div>
-
-        {#each $productStore.data as { id, name, quantity, buyPrice, buyPriceInRupiah, totalBuyPriceInRupiah, sellPrice, sellPriceInRupiah, totalSellPriceInRupiah } (id)}
+        {#each productTableTitles as { key, text, classes } (key)}
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div
             class={clsx(
-              "flex min-h-8 w-full px-4 shadow-border-b",
+              "flex cursor-pointer items-center gap-2 px-4 shadow-border-inner-br",
               "hover:bg-accent-100",
+              classes,
             )}
+            on:click={async () => {
+              productStore.sortProducts(key);
+
+              await tick();
+            }}
           >
-            <div
-              class="flex w-8 shrink-0 items-center justify-center shadow-border-r"
-            >
-              <Checkbox />
-            </div>
+            <span class="text-sm leading-none text-accent-950">{text}</span>
 
-            <div
-              class="flex w-[calc(100%_-_(32px_+_160px_+_240px_+_240px_+_200px_+_200px_+_80px))] min-w-[200px] items-center px-4 py-1 shadow-border-r"
-            >
-              <span class="text-sm">{name}</span>
-            </div>
-
-            <div
-              class="flex w-[160px] shrink-0 items-center px-4 py-1 shadow-border-r"
-            >
-              <span>{quantity}</span>
-            </div>
-
-            <div
-              class="flex w-[240px] shrink-0 items-center px-4 py-1 shadow-border-r"
-            >
-              <span>{buyPriceInRupiah}</span>
-            </div>
-
-            <div
-              class="flex w-[200px] shrink-0 items-center px-4 py-1 shadow-border-r"
-            >
-              <span>{totalBuyPriceInRupiah}</span>
-            </div>
-
-            <div
-              class="flex w-[240px] shrink-0 items-center px-4 py-1 shadow-border-r"
-            >
-              <span>{sellPriceInRupiah}</span>
-            </div>
-
-            <div
-              class="flex w-[200px] shrink-0 items-center px-4 py-1 shadow-border-r"
-            >
-              <span>{totalSellPriceInRupiah}</span>
-            </div>
-
-            <div
-              class="flex w-[80px] shrink-0 items-center justify-center gap-1 px-4"
-            >
-              <button
-                use:melt={$productDialogTrigger}
-                class="rounded bg-accent-200 p-1"
-                on:m-click={async (e) => {
-                  productStore.updateDialog({
-                    id,
-                    name,
-                    quantity,
-                    buyPrice,
-                    sellPrice,
-                  });
-
-                  await tick();
+            {#if orderByKey === key}
+              <Icon
+                props={{
+                  name:
+                    sortDirection === "ASC" ? "arrowDropUp" : "arrowDropDown",
+                  classes: clsx("size-5"),
                 }}
-              >
-                <Icon
-                  props={{
-                    name: "edit",
-                    classes: clsx("size-4 text-yellow-500"),
-                  }}
-                />
-              </button>
-
-              <!-- svelte-ignore a11y-click-events-have-key-events -->
-              <!-- svelte-ignore a11y-no-static-element-interactions -->
-              <div
-                class="cursor-pointer rounded bg-accent-200 p-1"
-                on:click={() => {
-                  deleteProduct(id);
-                }}
-              >
-                <Icon
-                  props={{
-                    name: "delete",
-                    classes: clsx("size-4 text-red-500"),
-                  }}
-                />
-              </div>
-            </div>
+              />
+            {/if}
           </div>
         {/each}
       </div>
 
-      <footer
-        class="flex w-full items-center justify-between bg-accent-100 px-4 py-2 text-sm leading-none"
-      >
-        <div class="flex items-center gap-2">
-          <input
-            type="number"
-            min="1"
-            max="25"
-            bind:value={inputLimit}
-            class={clsx(
-              "flex h-6 w-10 items-center justify-center rounded bg-accent-50 px-2 text-center text-sm font-medium leading-none shadow-border",
-            )}
-            on:keyup={(e) => {
-              handleInput(e, "limit");
+      {#each $productStore.data as { id, name, quantity, buyPrice, buyPriceInRupiah, totalBuyPriceInRupiah, sellPrice, sellPriceInRupiah, totalSellPriceInRupiah } (id)}
+        <div
+          transition:fade={{
+            duration: 500,
+            easing: cubicInOut,
+          }}
+          class={clsx("flex min-h-[34px] w-full", "hover:bg-accent-100")}
+        >
+          <div
+            class="flex min-w-8 items-center justify-center shadow-border-inner-br"
+          >
+            <Checkbox
+              props={{
+                value: $productStore.selectedProductIds.includes(id),
+              }}
+              on:click={() => {
+                productStore.toggleSelectedProductId(id);
+              }}
+            />
+          </div>
+
+          <div
+            use:melt={$productAddOrUpdateDialogTrigger}
+            on:m-click={async () => {
+              productStore.updateDialog({
+                id,
+                name,
+                quantity,
+                buyPrice,
+                sellPrice,
+              });
+
+              await tick();
+            }}
+            class="flex w-[calc((100%_-_32px)_/_6_*_2)] min-w-[150px] cursor-pointer items-center px-4 py-2 shadow-border-inner-br"
+          >
+            <span class="text-sm leading-none text-accent-800">{name}</span>
+          </div>
+
+          <div
+            class="flex w-[calc((100%_-_32px)_/_6_*_0.7)] min-w-[158px] items-center px-4 py-2 shadow-border-inner-br"
+          >
+            <span class="text-sm leading-none text-accent-800">{quantity}</span>
+          </div>
+
+          <div
+            class="flex w-[calc((100%_-_32px)_/_6_*_0.9)] min-w-[204px] items-center px-4 py-2 shadow-border-inner-br"
+          >
+            <span class="text-sm leading-none text-accent-800"
+              >{buyPriceInRupiah}</span
+            >
+          </div>
+
+          <div
+            class="flex w-[calc((100%_-_32px)_/_6_*_0.75)] min-w-[164px] items-center px-4 py-2 shadow-border-inner-br"
+          >
+            <span class="text-sm leading-none text-accent-800"
+              >{totalBuyPriceInRupiah}</span
+            >
+          </div>
+
+          <div
+            class="flex w-[calc((100%_-_32px)_/_6_*_0.9)] min-w-[207px] items-center px-4 py-2 shadow-border-inner-br"
+          >
+            <span class="text-sm leading-none text-accent-800"
+              >{sellPriceInRupiah}</span
+            >
+          </div>
+
+          <div
+            class="flex w-[calc((100%_-_32px)_/_6_*_0.75)] min-w-[167px] items-center px-4 py-2 shadow-border-inner-br"
+          >
+            <span class="text-sm leading-none text-accent-800"
+              >{totalSellPriceInRupiah}</span
+            >
+          </div>
+        </div>
+      {/each}
+    </section>
+
+    <footer
+      bind:clientHeight={footerHeight}
+      class={clsx(
+        "flex min-h-10 w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 overflow-auto bg-accent-100 px-4 py-2",
+      )}
+    >
+      {#if totalSelectedProductIds > 0}
+        <div
+          use:melt={$productConfirmationDeleteDialogTrigger}
+          class="flex flex-wrap items-center gap-x-4 gap-y-2"
+        >
+          <span
+            class="text-nowrap text-sm font-medium leading-none text-accent-950"
+            >{totalSelectedProductIds} Produk terpilih</span
+          >
+
+          <Button
+            props={{
+              text: "Hapus",
+              variant: "danger",
+              class: clsx("px-3 py-1 text-xs"),
             }}
           />
+        </div>
+      {:else}
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div class="flex items-center gap-x-2">
+            <input
+              type="number"
+              min="1"
+              max="25"
+              bind:value={inputLimit}
+              class={clsx(
+                "flex h-6 w-10 items-center justify-center rounded bg-accent-50 px-2 text-center text-sm font-medium leading-none shadow-border-inner",
+              )}
+              on:keyup={(e) => {
+                handleInput(e, "limit");
+              }}
+            />
 
-          <span>Produk per halaman</span>
+            <span class="text-nowrap text-sm leading-none"
+              >Produk per halaman</span
+            >
+          </div>
 
-          <span class="font-medium text-accent-950"
-            >Menampilkan {from} - {to} produk dari total {total} produk</span
+          <span class="text-sm font-medium leading-none text-accent-950"
+            >Menampilkan {from} - {to} produk dari {total} produk</span
           >
         </div>
 
-        <div class="flex items-center gap-2">
-          <input
-            type="number"
-            min="1"
-            max={totalPage}
-            bind:value={inputPage}
-            class={clsx(
-              "flex h-6 w-10 items-center justify-center rounded bg-accent-50 px-2 text-center text-sm font-medium leading-none shadow-border",
-            )}
-            on:keyup={(e) => {
-              handleInput(e, "page");
-            }}
-          />
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              min="1"
+              max={totalPage}
+              bind:value={inputPage}
+              class={clsx(
+                "flex h-6 w-10 items-center justify-center rounded bg-accent-50 px-2 text-center text-sm font-medium leading-none shadow-border-inner",
+              )}
+              on:keyup={(e) => {
+                handleInput(e, "page");
+              }}
+            />
 
-          <span class="font-medium">dari {totalPage} halaman</span>
+            <span class="text-nowrap text-sm font-medium leading-none"
+              >dari {totalPage} halaman</span
+            >
+          </div>
 
-          <Button
-            props={{
-              type: "button",
-              variant: "outline",
-              icon: {
-                name: "chevronLeft",
-                classes: clsx("size-5 shrink-0"),
-              },
-              disabled: currentPage <= 1,
-              class: clsx("size-6 p-0"),
-            }}
-            on:click={() => {
-              handlePage("previous");
-            }}
-          />
+          <div class="flex items-center gap-2">
+            <Button
+              props={{
+                type: "button",
+                variant: "outline",
+                icon: {
+                  name: "chevronLeft",
+                  classes: clsx("size-5"),
+                },
+                disabled: currentPage <= 1,
+                class: clsx("size-6 p-0"),
+              }}
+              on:click={() => {
+                handlePage("previous");
+              }}
+            />
 
-          <Button
-            props={{
-              type: "button",
-              variant: "outline",
-              icon: {
-                name: "chevronRight",
-                classes: clsx("size-5 shrink-0"),
-              },
-              disabled: currentPage >= totalPage,
-              class: clsx("size-6 p-0"),
-            }}
-            on:click={() => {
-              handlePage("next");
-            }}
-          />
+            <Button
+              props={{
+                type: "button",
+                variant: "outline",
+                icon: {
+                  name: "chevronRight",
+                  classes: clsx("size-5"),
+                },
+                disabled: currentPage >= totalPage,
+                class: clsx("size-6 p-0"),
+              }}
+              on:click={() => {
+                handlePage("next");
+              }}
+            />
+          </div>
         </div>
-      </footer>
-    {/if}
-  </section>
-</main>
+      {/if}
+    </footer>
+  {/if}
+</div>

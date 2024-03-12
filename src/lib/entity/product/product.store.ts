@@ -18,21 +18,25 @@ type ConfigProduct = {
   limit: number;
   total: number;
 };
-type DialogProduct = {} & Partial<
+
+export type DialogProduct = Partial<
   Omit<Product, "totalBuyPrice" | "totalSellPrice">
 >;
 
+type ProductStore = {
+  data: Array<FormattedProduct>;
+  config: ConfigProduct & {
+    currentPageInString: string;
+    limitInString: string;
+    orderByKey: OrderByKey | null;
+    sortDirection: "ASC" | "DESC";
+  };
+  dialog: DialogProduct;
+  selectedProductIds: Array<Product["id"]>;
+};
+
 const createProductStore = () => {
-  const { subscribe, update } = writable<{
-    data: FormattedProduct[];
-    config: ConfigProduct & {
-      currentPageInString: string;
-      limitInString: string;
-      orderByKey: OrderByKey | null;
-      sortDirection: "ASC" | "DESC";
-    };
-    dialog: DialogProduct;
-  }>({
+  const { subscribe, update } = writable<ProductStore>({
     data: [],
     config: {
       currentPage: 0,
@@ -48,11 +52,12 @@ const createProductStore = () => {
     },
     dialog: {
       id: undefined,
-      name: "",
+      name: undefined,
       quantity: 1,
       buyPrice: undefined,
       sellPrice: undefined,
     },
+    selectedProductIds: [],
   });
 
   const formatProduct = (product: Product): FormattedProduct => {
@@ -93,7 +98,6 @@ const createProductStore = () => {
     sortProducts: (key: OrderByKey) => {
       update((currentState) => {
         let {
-          data,
           config: { orderByKey, sortDirection },
         } = currentState;
 
@@ -107,11 +111,9 @@ const createProductStore = () => {
           sortDirection = "ASC";
         }
 
-        console.log({ data, orderByKey, sortDirection });
-
         return {
           ...currentState,
-          data: data.sort((a, b) => {
+          data: currentState.data.sort((a, b) => {
             const [x, y] =
               orderByKey === null
                 ? [a.id, b.id]
@@ -139,6 +141,63 @@ const createProductStore = () => {
         };
       });
     },
+    toggleAllSelectedProductId: () => {
+      update((currentState) => {
+        const { data, selectedProductIds } = currentState;
+
+        if (
+          selectedProductIds.length >= 0 &&
+          selectedProductIds.length !== data.length
+        ) {
+          currentState.selectedProductIds = data.map((product) => product.id);
+        } else {
+          currentState.selectedProductIds = [];
+        }
+
+        return currentState;
+      });
+    },
+    removeAllSelectedProductId: () => {
+      update((currentState) => {
+        return { ...currentState, selectedProductIds: [] };
+      });
+    },
+    toggleSelectedProductId: (id: Product["id"]) => {
+      update((currentState) => {
+        const { selectedProductIds } = currentState;
+
+        currentState.selectedProductIds = selectedProductIds.includes(id)
+          ? selectedProductIds.filter((productId) => productId !== id)
+          : [...selectedProductIds, id];
+
+        return currentState;
+      });
+    },
+    addSelectedProductId: (id: Product["id"]) => {
+      update((currentState) => {
+        const { selectedProductIds } = currentState;
+
+        const selectedId = selectedProductIds.find(
+          (productId) => productId === id,
+        );
+
+        if (selectedId === undefined) {
+          currentState.selectedProductIds = [...selectedProductIds, id];
+        }
+
+        return currentState;
+      });
+    },
+    removeSelectedProductId: (id: Product["id"]) => {
+      update((currentState) => {
+        currentState.selectedProductIds =
+          currentState.selectedProductIds.filter(
+            (productId) => productId !== id,
+          );
+
+        return currentState;
+      });
+    },
   };
 };
 
@@ -152,32 +211,31 @@ export const productTableTitles: Array<{
   {
     key: "name",
     text: "Nama Produk",
-    classes:
-      " min-w-[200px] w-[calc(100%_-_(32px_+_160px_+_240px_+_240px_+_200px_+_200px_+_80px))]",
+    classes: "w-[calc((100%_-_32px)_/_6_*_2)] min-w-[150px]",
   },
   {
     key: "quantity",
-    text: "Kuantitas",
-    classes: "w-[160px] shrink-0",
+    text: "Jumlah Produk",
+    classes: "w-[calc((100%_-_32px)_/_6_*_0.7)] min-w-[158px]",
   },
   {
     key: "buyPrice",
     text: "Harga Beli Per Satuan",
-    classes: "w-[240px] shrink-0",
+    classes: "w-[calc((100%_-_32px)_/_6_*_0.9)] min-w-[204px]",
   },
   {
     key: "totalBuyPrice",
     text: "Total Harga Beli",
-    classes: "w-[200px] shrink-0",
+    classes: "w-[calc((100%_-_32px)_/_6_*_0.75)] min-w-[164px]",
   },
   {
     key: "sellPrice",
     text: "Harga Jual Per Satuan",
-    classes: "w-[240px] shrink-0",
+    classes: "w-[calc((100%_-_32px)_/_6_*_0.9)] min-w-[207px]",
   },
   {
     key: "totalSellPrice",
     text: "Total Harga Jual",
-    classes: "w-[200px] shrink-0",
+    classes: "w-[calc((100%_-_32px)_/_6_*_0.75)] min-w-[167px]",
   },
 ];
