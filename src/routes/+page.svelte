@@ -215,7 +215,7 @@
         max-height: calc(100vh - (64px + ${footerHeight}px));
       `}
     >
-      <div class="sticky left-0 top-0 flex min-h-[34px] w-full bg-accent-50">
+      <div class="flex min-h-[34px] w-full bg-accent-50">
         <div
           class="flex min-w-8 items-center justify-center shadow-border-inner-br"
         >
