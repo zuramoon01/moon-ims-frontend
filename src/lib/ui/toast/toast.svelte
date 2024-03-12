@@ -2,8 +2,10 @@
   lang="ts"
   context="module"
 >
+  export type ToastState = "Sukses" | "Peringatan" | "Error";
+
   export type ToastData = {
-    state: "Sukses" | "Peringatan" | "Error";
+    state: ToastState;
     message: string;
   };
 
@@ -21,47 +23,59 @@
   import { createToaster, melt } from "@melt-ui/svelte";
   import clsx from "clsx";
   import { Icon } from "$lib/ui";
+
+  const toastStateClass: Record<ToastState, Array<string> | string> = {
+    Sukses: "bg-green-500",
+    Peringatan: "bg-yellow-500",
+    Error: "bg-red-500",
+  };
 </script>
 
 <div
   use:portal
   class={clsx(
-    "fixed right-0 top-0 z-[9999] m-4 flex w-full max-w-[320px] flex-col items-center justify-center gap-2 text-accent-950 md:bottom-0 md:top-auto",
+    "fixed right-0 top-0 z-40 flex flex-col items-center justify-center gap-2 px-4 py-4",
+    "max-[560px]:w-full",
+    "sm:bottom-0 sm:top-auto",
+    "md:px-8",
   )}
 >
   {#each $toasts as { id, data: { state, message } } (id)}
     <div
       use:melt={$content(id)}
-      class="relative flex w-full flex-col items-start justify-center gap-2 rounded-lg bg-accent-100 p-4 shadow-border"
+      class={clsx(
+        "flex w-[40ch] flex-col items-start justify-center gap-1 overflow-auto rounded-md bg-accent-100 p-4 shadow-border",
+        "max-[560px]:w-full",
+      )}
     >
-      <div class="flex h-4 w-full items-center justify-between gap-2">
+      <div class="flex h-4 w-full items-center justify-between gap-4">
         <h3
           use:melt={$title(id)}
-          class="flex items-center gap-2 text-base font-semibold leading-none"
+          class="flex items-center gap-2 text-base font-semibold leading-none text-accent-950"
         >
           {state}
 
-          <span
+          <div
             class={clsx(
-              "size-2 rounded-full",
-              state === "Sukses" && "bg-green-500",
-              state === "Peringatan" && "bg-yellow-500",
-              state === "Error" && "bg-red-500",
+              "size-2 rounded-full text-accent-950",
+              toastStateClass[state],
             )}
-          />
+          ></div>
         </h3>
 
-        <button
-          use:melt={$close(id)}
-          class={"hover:text-accent-800"}
-        >
-          <Icon props={{ name: "close", classes: clsx("size-5") }} />
+        <button use:melt={$close(id)}>
+          <Icon
+            props={{
+              name: "close",
+              classes: clsx("size-4 text-accent-500", "hover:text-accent-950"),
+            }}
+          />
         </button>
       </div>
 
       <span
         use:melt={$description(id)}
-        class="flex items-center gap-2 text-sm leading-normal"
+        class="flex items-center text-sm leading-tight text-accent-800"
       >
         {message}
       </span>

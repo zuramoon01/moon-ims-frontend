@@ -1,12 +1,26 @@
+<script
+  lang="ts"
+  context="module"
+>
+  export interface CheckboxProps {
+    value: boolean | "indeterminate";
+  }
+</script>
+
 <script lang="ts">
   import { createCheckbox, melt } from "@melt-ui/svelte";
   import clsx from "clsx";
   import { Icon } from "$lib/ui";
 
+  export let props: CheckboxProps;
+
   const {
     elements: { input, root },
     helpers: { isChecked, isIndeterminate },
+    states: { checked },
   } = createCheckbox();
+
+  $: checked.set(props.value);
 </script>
 
 <button
@@ -17,6 +31,7 @@
       ? "border-accent-950 text-accent-950"
       : "border-accent-950/20 text-accent-950/20",
   )}
+  on:click
 >
   {#if $isIndeterminate}
     <Icon props={{ name: "remove" }} />

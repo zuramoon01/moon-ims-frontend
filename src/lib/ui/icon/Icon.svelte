@@ -9,6 +9,7 @@
 </script>
 
 <script lang="ts">
+  import { twMerge } from "tailwind-merge";
   import clsx from "clsx";
   import { icons, type IconName } from "$lib/ui";
 
@@ -21,7 +22,7 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
   viewBox={viewBox}
-  class={clsx(classes || "size-6", "fill-current")}
+  class={twMerge(clsx("size-6 fill-current", classes))}
 >
   {#if paths && paths.length > 0}
     {#each paths as { d, fill }, i (i)}
