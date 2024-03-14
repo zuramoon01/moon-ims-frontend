@@ -29,7 +29,6 @@
 
   $: ({
     currentPage,
-    currentPageInString,
     totalPage,
     from,
     to,

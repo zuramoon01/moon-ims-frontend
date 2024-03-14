@@ -11,7 +11,7 @@
 </script>
 
 <script lang="ts">
-  import { getContext, onDestroy, tick } from "svelte";
+  import { getContext, tick } from "svelte";
   import { fade } from "svelte/transition";
   import { cubicInOut } from "svelte/easing";
   import { createDialog, melt } from "@melt-ui/svelte";
