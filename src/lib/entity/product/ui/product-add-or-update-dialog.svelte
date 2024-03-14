@@ -306,7 +306,7 @@
 
             <Button
               props={{
-                type: "button",
+                type: "submit",
                 text: input.id ? "Simpan Perubahan" : "Tambah Produk",
                 class: clsx("w-full", "mobile-l:w-auto"),
                 loading: processState === "loading",

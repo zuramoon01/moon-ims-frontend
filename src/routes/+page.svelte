@@ -13,6 +13,7 @@
     ProductAddOrUpdateDialog,
     productAddOrUpdateDialogTrigger,
     ProductConfirmationDeleteDialog,
+    productConfirmationDeleteDialogTrigger,
   } from "$lib/entity";
   import { apiMoonIMS, appStore, handleError, Route } from "$lib/util";
   import {
@@ -391,6 +392,7 @@
           >
 
           <button
+            use:melt={$productConfirmationDeleteDialogTrigger}
             type="button"
             class={generateButtonClasses({ text: true, variant: "danger" })}
             >Hapus</button
