@@ -3,6 +3,7 @@
   import clsx from "clsx";
   import { Route, appStore } from "$lib/util";
   import { Button, Link, type LinkProps } from "$lib/ui";
+  import { twMerge } from "tailwind-merge";
 
   $: ({ showSidebar } = $appStore);
 
@@ -34,19 +35,36 @@
 ></div>
 
 <aside
-  class={clsx(
-    "fixed top-0 z-10 flex h-full w-full max-w-sidebar flex-col items-start justify-between gap-8 bg-accent-50 p-4 shadow-border-inner-r transition-all duration-500",
-    showSidebar ? "left-0" : "-left-sidebar",
-    "tablet:left-0",
+  class={twMerge(
+    clsx(
+      "fixed top-0 z-10 flex h-full w-full max-w-sidebar flex-col items-start justify-between gap-8 bg-accent-50 p-4 shadow-border-inner-r transition-all duration-500",
+      showSidebar ? "left-0" : "-left-sidebar",
+      "tablet:left-0",
+    ),
   )}
 >
   <header class="flex w-full flex-col items-start gap-1">
-    <div class="flex h-12 w-full items-center px-4 pb-4 shadow-border-inner-b">
+    <div
+      class="flex h-12 w-full items-center justify-between gap-4 pb-4 shadow-border-inner-b"
+    >
       <h2
         class="text-nowrap text-lg font-extrabold leading-none text-accent-950"
       >
         Kasih Murah Store
       </h2>
+
+      <Button
+        props={{
+          type: "button",
+          icon: {
+            name: "close",
+          },
+          class: clsx("tablet:hidden"),
+        }}
+        on:click={() => {
+          appStore.toggleSidebar(false);
+        }}
+      />
     </div>
 
     <nav class="flex w-full flex-col items-start gap-1">

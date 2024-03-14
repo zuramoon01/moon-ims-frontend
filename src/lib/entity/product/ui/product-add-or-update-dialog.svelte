@@ -95,8 +95,6 @@
 
                 productStore.setProductStore(productsWithConfig);
 
-                await resetDialog();
-
                 await tick();
 
                 addToast({
@@ -148,8 +146,6 @@
 
                   productStore.setProductStore(productsWithConfig);
 
-                  await resetDialog();
-
                   await tick();
 
                   addToast({
@@ -198,13 +194,11 @@
               use:melt={$title}
               class="text-base font-semibold leading-none text-accent-950"
             >
-              {input.id ? "Tambah Produk" : "Perbaharui Produk"}
+              {input.id ? "Perbaharui Produk" : "Tambah Produk"}
             </h3>
 
             <button
               use:melt={$close}
-              on:m-click={resetDialog}
-              on:m-keydown={resetDialog}
               class={generateButtonClasses({ icon: true, variant: "shadow" })}
             >
               <div class="flex h-[0.875rem] items-center justify-center">
@@ -219,7 +213,10 @@
           </div>
         </div>
 
-        <form class="flex w-full flex-col items-start gap-4">
+        <form
+          on:submit|preventDefault={submitProduct}
+          class="flex w-full flex-col items-start gap-4"
+        >
           <Input
             props={{
               label: "Nama Produk",
@@ -297,9 +294,7 @@
                 text: "Batalkan",
                 class: clsx("w-full", "mobile-l:w-auto"),
               }}
-              on:click={async () => {
-                await resetDialog();
-
+              on:click={() => {
                 open.set(false);
               }}
             />
@@ -311,7 +306,6 @@
                 class: clsx("w-full", "mobile-l:w-auto"),
                 loading: processState === "loading",
               }}
-              on:click={submitProduct}
             />
           </div>
         </form>

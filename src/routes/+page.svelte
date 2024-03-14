@@ -197,6 +197,17 @@
 
     <button
       use:melt={$productAddOrUpdateDialogTrigger}
+      on:click={async () => {
+        productStore.updateDialog({
+          id: undefined,
+          name: undefined,
+          quantity: 1,
+          buyPrice: undefined,
+          sellPrice: undefined,
+        });
+
+        await tick();
+      }}
       class={generateButtonClasses({
         text: true,
         icon: true,
