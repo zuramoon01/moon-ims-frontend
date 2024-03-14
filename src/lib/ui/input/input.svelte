@@ -4,7 +4,7 @@
 >
   export interface InputProps extends Omit<HTMLInputAttributes, "value"> {
     containerClasses?: string | null;
-    label: string;
+    label?: string;
   }
 </script>
 
@@ -24,12 +24,14 @@
     clsx("flex w-full flex-col items-start gap-2", containerClasses),
   )}
 >
-  <label
-    class="text-sm font-medium leading-none"
-    for={id}
-  >
-    {label}
-  </label>
+  {#if label}
+    <label
+      class="text-sm font-medium leading-none"
+      for={id}
+    >
+      {label}
+    </label>
+  {/if}
 
   <input
     {...attr}
@@ -37,7 +39,7 @@
     bind:value={value}
     class={twMerge(
       clsx(
-        "flex w-full items-start justify-center rounded bg-accent-100 px-4 py-2 leading-none shadow-border-inner",
+        "flex w-full items-start justify-center rounded bg-accent-50 px-4 py-2 text-sm font-medium leading-none shadow-border",
         classes,
       ),
     )}

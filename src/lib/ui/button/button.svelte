@@ -25,19 +25,24 @@
 
 <button
   {...attr}
-  class={generateButtonClasses({ text, icon, variant, classes, loading })}
+  class={generateButtonClasses({
+    text: !!text,
+    icon: !!icon,
+    variant,
+    classes,
+    loading,
+  })}
   on:click
 >
   {#if loading}
     <CircleLoader props={{ classes: clsx("size-4 border-4") }} />
 
     {#if text}
-      <span class="text-nowrap text-sm font-semibold leading-none">Loading</span
-      >
+      <span class="text-nowrap text-sm font-medium leading-none">Loading</span>
     {/if}
   {:else}
     {#if icon}
-      <div class="flex h-[14px] items-center justify-center">
+      <div class="flex h-[0.875rem] items-center justify-center">
         <Icon
           props={{
             ...icon,
@@ -47,8 +52,6 @@
       </div>
     {/if}
 
-    <span class="text-nowrap text-sm font-semibold leading-none"
-      >{text || ""}</span
-    >
+    <span class="text-sm font-medium leading-none">{text || ""}</span>
   {/if}
 </button>

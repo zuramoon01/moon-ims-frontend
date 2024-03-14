@@ -6,7 +6,7 @@ interface AppStore {
 
 const createAppStore = () => {
   const { subscribe, update } = writable<AppStore>({
-    showSidebar: true,
+    showSidebar: false,
   });
 
   return {

@@ -47,8 +47,19 @@ export default {
       fontFamily: {
         inter: ["Inter", "sans-serif"],
       },
+      screens: {
+        "mobile-s": "20rem",
+        "mobile-m": "23.438rem",
+        "mobile-l": "26.563rem",
+        tablet: "48rem",
+        laptop: "64rem",
+        desktop: "90rem",
+        hoverable: {
+          raw: "(hover: hover) and (pointer: fine)",
+        },
+      },
       spacing: {
-        sidebar: "240px",
+        sidebar: "15rem",
       },
     },
   },

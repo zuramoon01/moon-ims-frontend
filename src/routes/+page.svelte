@@ -2,25 +2,28 @@
   import { onDestroy, onMount, setContext, tick } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
-  import { fade } from "svelte/transition";
+  import { flip } from "svelte/animate";
+  import { fade, fly } from "svelte/transition";
   import { cubicInOut } from "svelte/easing";
-  import { melt } from "@melt-ui/svelte";
   import clsx from "clsx";
   import {
     productStore,
     productTableTitles,
+    productsWithConfigSchema,
     ProductAddOrUpdateDialog,
     productAddOrUpdateDialogTrigger,
-    productAddOrUpdateDialogOpen,
-    productAddOrUpdateDialogPortalled,
     ProductConfirmationDeleteDialog,
-    productConfirmationDeleteDialogTrigger,
-    productConfirmationDeleteDialogOpen,
-    productConfirmationDeleteDialogPortalled,
-    productsWithConfigSchema,
   } from "$lib/entity";
   import { apiMoonIMS, appStore, handleError, Route } from "$lib/util";
-  import { Button, Checkbox, CircleLoader, Icon } from "$lib/ui";
+  import {
+    Button,
+    Checkbox,
+    CircleLoader,
+    Icon,
+    Input,
+    generateButtonClasses,
+  } from "$lib/ui";
+  import { melt } from "@melt-ui/svelte";
 
   let pageState: "idle" | "loading" = "loading";
 
@@ -35,8 +38,6 @@
     orderByKey,
     sortDirection,
   } = $productStore.config);
-
-  $: ({ showSidebar } = $appStore);
 
   $: totalProducts = $productStore.data.length;
   $: totalSelectedProductIds = $productStore.selectedProductIds.length;
@@ -85,35 +86,41 @@
     await goto(urlProduct);
   };
 
-  let inputPage = "0";
   let inputLimit = "0";
-  const handleInput = async (
-    e: KeyboardEvent & {
-      currentTarget: EventTarget & HTMLInputElement;
-    },
-    param: "page" | "limit",
-  ) => {
-    if (e.key === "Enter") {
-      let value = Number(e.currentTarget.value);
-      value = value !== 0 ? value : param === "page" ? 1 : 15;
+  const handleSubmitLimit = async () => {
+    let value = Number(inputLimit);
+    value = value !== 0 ? (value < 1 ? 1 : value > 25 ? 25 : value) : 15;
 
-      const params = {
-        page: currentPageInString,
-        limit: limitInString,
-      };
+    inputLimit = value.toString();
 
-      if (param === "page") {
-        value = value < 1 ? 1 : value > totalPage ? totalPage : value;
-      } else {
-        value = value < 1 ? 1 : value > 25 ? 25 : value;
-      }
+    const params = {
+      page: inputPage,
+      limit: inputLimit,
+    };
 
-      params[param] = value.toString();
+    console.log(params);
 
-      await updateProductPage(params);
+    await updateProductPage(params);
 
-      await getProducts();
-    }
+    await getProducts();
+  };
+
+  let inputPage = "0";
+  const handleSubmitPage = async () => {
+    let value = Number(inputPage);
+    value =
+      value !== 0 ? (value < 1 ? 1 : value > totalPage ? totalPage : value) : 1;
+
+    inputPage = value.toString();
+
+    const params = {
+      page: inputPage,
+      limit: inputLimit,
+    };
+
+    await updateProductPage(params);
+
+    await getProducts();
   };
 
   const handlePage = async (step: "previous" | "next") => {
@@ -167,61 +174,72 @@
   <title>Admin | Produk</title>
 </svelte:head>
 
-<div use:melt={$productAddOrUpdateDialogPortalled}>
-  {#if $productAddOrUpdateDialogOpen}
-    <ProductAddOrUpdateDialog />
-  {/if}
-</div>
+<div class={clsx("flex w-full flex-col items-start px-4", "tablet:px-8")}>
+  <ProductAddOrUpdateDialog />
 
-<div use:melt={$productConfirmationDeleteDialogPortalled}>
-  {#if $productConfirmationDeleteDialogOpen}
-    <ProductConfirmationDeleteDialog />
-  {/if}
-</div>
-
-<div class={clsx("flex w-full flex-col items-start px-4", "md:px-8")}>
   <header class="flex h-16 w-full items-center justify-between gap-8">
-    <h1 class="text-xl font-bold leading-none text-accent-950">Produk</h1>
+    <div class="flex items-center gap-4">
+      <Button
+        props={{
+          type: "button",
+          icon: {
+            name: "menu",
+          },
+          class: "tablet:hidden",
+        }}
+        on:click={() => {
+          appStore.toggleSidebar(true);
+        }}
+      />
 
-    <div use:melt={$productAddOrUpdateDialogTrigger}>
-      <Button
-        props={{
-          icon: { name: "plus" },
-          class: clsx(
-            showSidebar ? "min-[572px]:hidden" : "min-[379px]:hidden",
-          ),
-        }}
-      />
-      <Button
-        props={{
-          text: "Tambah Produk",
-          icon: { name: "plus" },
-          class: clsx(
-            showSidebar ? "max-[571px]:hidden" : "max-[378px]:hidden",
-          ),
-        }}
-      />
+      <h1 class="text-xl font-bold leading-none text-accent-950">Produk</h1>
     </div>
+
+    <button
+      use:melt={$productAddOrUpdateDialogTrigger}
+      class={generateButtonClasses({
+        text: true,
+        icon: true,
+        classes: clsx(
+          "size-[1.875rem] px-0 py-0",
+          "tablet:size-auto tablet:px-4 tablet:py-2",
+        ),
+      })}
+    >
+      <div class="flex h-[0.875rem] items-center justify-center">
+        <Icon
+          props={{
+            name: "plus",
+            classes: clsx("size-5 shrink-0"),
+          }}
+        />
+      </div>
+
+      <span
+        class={clsx("hidden text-sm font-medium leading-none", "tablet:inline")}
+        >Tambah Produk</span
+      >
+    </button>
   </header>
 
   {#if pageState === "loading" || total <= 0}
     <div class="flex w-full items-start justify-center">
-      <CircleLoader props={{}} />
+      <CircleLoader />
     </div>
   {:else}
     <section
       class="flex w-full flex-col items-start overflow-auto"
       style={`
-        max-height: calc(100vh - (64px + ${footerHeight}px));
+        max-height: calc(100vh - (4rem + ${footerHeight}px));
       `}
     >
-      <div class="flex min-h-[34px] w-full bg-accent-50">
+      <div class="flex min-h-[2.125rem] w-full bg-accent-50">
         <div
           class="flex min-w-8 items-center justify-center shadow-border-inner-br"
         >
           <Checkbox
             props={{
-              value:
+              state:
                 totalSelectedProductIds === 0
                   ? false
                   : totalSelectedProductIds === totalProducts
@@ -264,18 +282,30 @@
 
       {#each $productStore.data as { id, name, quantity, buyPrice, buyPriceInRupiah, totalBuyPriceInRupiah, sellPrice, sellPriceInRupiah, totalSellPriceInRupiah } (id)}
         <div
-          transition:fade={{
-            duration: 500,
+          animate:flip={{
+            duration: 300,
             easing: cubicInOut,
           }}
-          class={clsx("flex min-h-[34px] w-full", "hover:bg-accent-100")}
+          in:fade={{
+            duration: 150,
+            easing: cubicInOut,
+          }}
+          out:fly={{
+            duration: 150,
+            x: "100%",
+            easing: cubicInOut,
+          }}
+          class={clsx(
+            "flex min-h-[2.125rem] w-full",
+            "hoverable:hover:bg-accent-100",
+          )}
         >
           <div
             class="flex min-w-8 items-center justify-center shadow-border-inner-br"
           >
             <Checkbox
               props={{
-                value: $productStore.selectedProductIds.includes(id),
+                state: $productStore.selectedProductIds.includes(id),
               }}
               on:click={() => {
                 productStore.toggleSelectedProductId(id);
@@ -284,31 +314,35 @@
           </div>
 
           <div
-            use:melt={$productAddOrUpdateDialogTrigger}
-            on:m-click={async () => {
-              productStore.updateDialog({
-                id,
-                name,
-                quantity,
-                buyPrice,
-                sellPrice,
-              });
-
-              await tick();
-            }}
-            class="flex w-[calc((100%_-_32px)_/_6_*_2)] min-w-[150px] cursor-pointer items-center px-4 py-2 shadow-border-inner-br"
+            class="flex w-[calc((100%_-_2rem)_/_6_*_2)] min-w-[9.375rem] items-center px-4 py-2 shadow-border-inner-br"
           >
-            <span class="text-sm leading-none text-accent-800">{name}</span>
+            <button
+              use:melt={$productAddOrUpdateDialogTrigger}
+              on:m-click={async () => {
+                productStore.updateDialog({
+                  id,
+                  name,
+                  quantity,
+                  buyPrice,
+                  sellPrice,
+                });
+
+                await tick();
+              }}
+              class="flex h-full w-full items-center"
+            >
+              <span class="text-sm leading-none text-accent-800">{name}</span>
+            </button>
           </div>
 
           <div
-            class="flex w-[calc((100%_-_32px)_/_6_*_0.7)] min-w-[158px] items-center px-4 py-2 shadow-border-inner-br"
+            class="flex w-[calc((100%_-_2rem)_/_6_*_0.7)] min-w-[9.875rem] items-center px-4 py-2 shadow-border-inner-br"
           >
             <span class="text-sm leading-none text-accent-800">{quantity}</span>
           </div>
 
           <div
-            class="flex w-[calc((100%_-_32px)_/_6_*_0.9)] min-w-[204px] items-center px-4 py-2 shadow-border-inner-br"
+            class="flex w-[calc((100%_-_2rem)_/_6_*_0.9)] min-w-[12.75rem] items-center px-4 py-2 shadow-border-inner-br"
           >
             <span class="text-sm leading-none text-accent-800"
               >{buyPriceInRupiah}</span
@@ -316,7 +350,7 @@
           </div>
 
           <div
-            class="flex w-[calc((100%_-_32px)_/_6_*_0.75)] min-w-[164px] items-center px-4 py-2 shadow-border-inner-br"
+            class="flex w-[calc((100%_-_2rem)_/_6_*_0.75)] min-w-[10.25rem] items-center px-4 py-2 shadow-border-inner-br"
           >
             <span class="text-sm leading-none text-accent-800"
               >{totalBuyPriceInRupiah}</span
@@ -324,7 +358,7 @@
           </div>
 
           <div
-            class="flex w-[calc((100%_-_32px)_/_6_*_0.9)] min-w-[207px] items-center px-4 py-2 shadow-border-inner-br"
+            class="flex w-[calc((100%_-_2rem)_/_6_*_0.9)] min-w-[12.938rem] items-center px-4 py-2 shadow-border-inner-br"
           >
             <span class="text-sm leading-none text-accent-800"
               >{sellPriceInRupiah}</span
@@ -332,7 +366,7 @@
           </div>
 
           <div
-            class="flex w-[calc((100%_-_32px)_/_6_*_0.75)] min-w-[167px] items-center px-4 py-2 shadow-border-inner-br"
+            class="flex w-[calc((100%_-_2rem)_/_6_*_0.75)] min-w-[10.438rem] items-center px-4 py-2 shadow-border-inner-br"
           >
             <span class="text-sm leading-none text-accent-800"
               >{totalSellPriceInRupiah}</span
@@ -342,6 +376,8 @@
       {/each}
     </section>
 
+    <ProductConfirmationDeleteDialog />
+
     <footer
       bind:clientHeight={footerHeight}
       class={clsx(
@@ -349,70 +385,65 @@
       )}
     >
       {#if totalSelectedProductIds > 0}
-        <div
-          use:melt={$productConfirmationDeleteDialogTrigger}
-          class="flex flex-wrap items-center gap-x-4 gap-y-2"
-        >
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
           <span
             class="text-nowrap text-sm font-medium leading-none text-accent-950"
             >{totalSelectedProductIds} Produk terpilih</span
           >
 
-          <Button
-            props={{
-              text: "Hapus",
-              variant: "danger",
-              class: clsx("px-3 py-1 text-xs"),
-            }}
-          />
+          <button
+            type="button"
+            class={generateButtonClasses({ text: true, variant: "danger" })}
+            >Hapus</button
+          >
         </div>
       {:else}
-        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <div class="flex items-center gap-x-2">
-            <input
-              type="number"
-              min="1"
-              max="25"
-              bind:value={inputLimit}
-              class={clsx(
-                "flex h-6 w-10 items-center justify-center rounded bg-accent-50 px-2 text-center text-sm font-medium leading-none shadow-border-inner",
-              )}
-              on:keyup={(e) => {
-                handleInput(e, "limit");
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <form
+            on:submit|preventDefault={handleSubmitLimit}
+            class="flex items-center gap-4"
+          >
+            <Input
+              props={{
+                type: "number",
+                min: "1",
+                max: "25",
+                class: clsx("w-10 items-center px-2 text-center"),
               }}
+              bind:value={inputLimit}
             />
 
             <span class="text-nowrap text-sm leading-none"
               >Produk per halaman</span
             >
-          </div>
+          </form>
 
           <span class="text-sm font-medium leading-none text-accent-950"
             >Menampilkan {from} - {to} produk dari {total} produk</span
           >
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="flex items-center gap-2">
-            <input
-              type="number"
-              min="1"
-              max={totalPage}
-              bind:value={inputPage}
-              class={clsx(
-                "flex h-6 w-10 items-center justify-center rounded bg-accent-50 px-2 text-center text-sm font-medium leading-none shadow-border-inner",
-              )}
-              on:keyup={(e) => {
-                handleInput(e, "page");
+        <div class="flex items-center gap-4">
+          <form
+            on:submit|preventDefault={handleSubmitPage}
+            class="flex items-center gap-4"
+          >
+            <Input
+              props={{
+                type: "number",
+                min: "1",
+                max: totalPage,
+                class: clsx("w-10 items-center px-2 text-center"),
               }}
+              bind:value={inputPage}
             />
 
             <span class="text-nowrap text-sm font-medium leading-none"
               >dari {totalPage} halaman</span
             >
-          </div>
+          </form>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-4">
             <Button
               props={{
                 type: "button",
@@ -422,7 +453,6 @@
                   classes: clsx("size-5"),
                 },
                 disabled: currentPage <= 1,
-                class: clsx("size-6 p-0"),
               }}
               on:click={() => {
                 handlePage("previous");
@@ -438,7 +468,6 @@
                   classes: clsx("size-5"),
                 },
                 disabled: currentPage >= totalPage,
-                class: clsx("size-6 p-0"),
               }}
               on:click={() => {
                 handlePage("next");

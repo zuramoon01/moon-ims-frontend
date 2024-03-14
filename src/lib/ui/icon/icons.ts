@@ -17,6 +17,7 @@ export type IconName =
   | "edit"
   | "inventory"
   | "logout"
+  | "menu"
   | "plus"
   | "receipt"
   | "remove";
@@ -119,6 +120,15 @@ export const icons: Record<IconName, Icon> = {
       { d: "M0 0h24v24H0z", fill: "none" },
       {
         d: "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z",
+      },
+    ],
+  },
+  menu: {
+    viewBox: "0 0 24 24",
+    paths: [
+      { d: "M0 0h24v24H0V0z", fill: "none" },
+      {
+        d: "M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z",
       },
     ],
   },

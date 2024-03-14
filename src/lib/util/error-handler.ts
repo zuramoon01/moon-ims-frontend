@@ -30,7 +30,7 @@ const handleAxiosError = ({
       addToast({
         data: {
           state: "Error",
-          message: message,
+          description: message,
         },
       });
     } else {

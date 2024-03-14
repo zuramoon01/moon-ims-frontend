@@ -6,11 +6,12 @@
 
   export type ToastData = {
     state: ToastState;
-    message: string;
+    title?: string;
+    description: string;
   };
 
   const {
-    elements: { content, title, description, close },
+    elements: { content, title: titleEl, description: descriptionEl, close },
     helpers,
     states: { toasts },
     actions: { portal },
@@ -20,65 +21,84 @@
 </script>
 
 <script lang="ts">
+  import { flip } from "svelte/animate";
+  import { fly } from "svelte/transition";
+  import { cubicInOut } from "svelte/easing";
   import { createToaster, melt } from "@melt-ui/svelte";
   import clsx from "clsx";
-  import { Icon } from "$lib/ui";
+  import { Icon, generateButtonClasses } from "$lib/ui";
+  // import { onMount } from "svelte";
 
   const toastStateClass: Record<ToastState, Array<string> | string> = {
     Sukses: "bg-green-500",
     Peringatan: "bg-yellow-500",
     Error: "bg-red-500",
   };
+
+  // onMount(() => {
+  //   addToast({
+  //     data: {
+  //       state: "Sukses",
+  //       description:
+  //         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec feugiat turpis et neque feugiat malesuada.",
+  //     },
+  //     closeDelay: 5 * 60 * 1000,
+  //   });
+  // });
 </script>
 
 <div
   use:portal
   class={clsx(
-    "fixed right-0 top-0 z-40 flex flex-col items-center justify-center gap-2 px-4 py-4",
-    "max-[560px]:w-full",
-    "sm:bottom-0 sm:top-auto",
-    "md:px-8",
+    $toasts.length === 0 && "pointer-events-none",
+    "fixed right-[50%] top-0 z-50 flex w-full max-w-[25rem] translate-x-[50%] flex-col items-center justify-center gap-2 p-4",
+    "tablet:bottom-0 tablet:right-0 tablet:top-auto tablet:translate-x-0 tablet:px-8",
   )}
 >
-  {#each $toasts as { id, data: { state, message } } (id)}
+  {#each $toasts as { id, data: { state, title, description } } (id)}
     <div
       use:melt={$content(id)}
-      class={clsx(
-        "flex w-[40ch] flex-col items-start justify-center gap-1 overflow-auto rounded-md bg-accent-100 p-4 shadow-border",
-        "max-[560px]:w-full",
-      )}
+      animate:flip={{ duration: 300, easing: cubicInOut }}
+      in:fly={{ duration: 150, y: "100%", easing: cubicInOut }}
+      out:fly={{ duration: 150, x: "100%", easing: cubicInOut }}
+      class="flex w-full flex-col items-start gap-2 overflow-auto rounded bg-accent-50 p-4 shadow-border"
     >
       <div class="flex h-4 w-full items-center justify-between gap-4">
-        <h3
-          use:melt={$title(id)}
-          class="flex items-center gap-2 text-base font-semibold leading-none text-accent-950"
-        >
-          {state}
+        <div class="flex items-center gap-2">
+          <h3
+            use:melt={$titleEl(id)}
+            class="text-sm font-medium leading-none"
+          >
+            {title || state}
+          </h3>
 
           <div
-            class={clsx(
-              "size-2 rounded-full text-accent-950",
-              toastStateClass[state],
-            )}
+            class={clsx("size-2 rounded-full", toastStateClass[state])}
           ></div>
-        </h3>
+        </div>
 
-        <button use:melt={$close(id)}>
-          <Icon
-            props={{
-              name: "close",
-              classes: clsx("size-4 text-accent-500", "hover:text-accent-950"),
-            }}
-          />
+        <button
+          use:melt={$close(id)}
+          aria-label="close notification"
+          class={generateButtonClasses({ icon: true, variant: "shadow" })}
+        >
+          <div class="flex h-[0.875rem] items-center justify-center">
+            <Icon
+              props={{
+                name: "close",
+                classes: clsx("size-5 shrink-0"),
+              }}
+            />
+          </div>
         </button>
       </div>
 
-      <span
-        use:melt={$description(id)}
-        class="flex items-center text-sm leading-tight text-accent-800"
+      <p
+        use:melt={$descriptionEl(id)}
+        class="w-full text-sm leading-tight text-accent-500"
       >
-        {message}
-      </span>
+        {description}
+      </p>
     </div>
   {/each}
 </div>

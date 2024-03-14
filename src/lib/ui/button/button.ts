@@ -1,6 +1,6 @@
 import { twMerge } from "tailwind-merge";
 import clsx from "clsx";
-import type { ButtonProps, IconProps } from "$lib/ui";
+import type { IconProps } from "$lib/ui";
 
 type ButtonVariant = "filled" | "secondary" | "outline" | "shadow" | "danger";
 
@@ -16,68 +16,44 @@ export const generateButtonClasses = ({
   variant = "filled",
   classes,
   loading,
-}: BaseButtonProps & {
-  classes: string | null | undefined;
-} & Pick<ButtonProps, "loading">) => {
+}: {
+  text?: boolean;
+  icon?: boolean;
+  variant?: ButtonVariant;
+  classes?: string | null;
+  loading?: boolean;
+}) => {
   const variantClasses: Record<ButtonVariant, Array<string> | string> = {
     filled: clsx(
       "bg-accent-950 text-accent-50",
-      "hover:bg-accent-800",
-      "active:bg-accent-900",
-      "focus:bg-accent-900",
-      "disabled:cursor-not-allowed disabled:bg-accent-200 disabled:text-accent-500",
-      "disabled:hover:bg-accent-200",
-      "disabled:active:bg-accent-200",
-      "disabled:focus:bg-accent-200",
+      "hoverable:hover:bg-accent-700",
     ),
     secondary: clsx(
       "bg-accent-200 text-accent-950",
-      "hover:bg-accent-400",
-      "active:bg-accent-300",
-      "focus:bg-accent-300",
-      "disabled:cursor-not-allowed disabled:bg-accent-200 disabled:text-accent-500",
-      "disabled:hover:bg-accent-200",
-      "disabled:active:bg-accent-200",
-      "disabled:focus:bg-accent-200",
+      "hoverable:hover:bg-accent-500",
     ),
     outline: clsx(
       "bg-accent-50 text-accent-950 shadow-border",
-      "hover:bg-accent-100",
-      "active:bg-accent-50",
-      "focus:bg-accent-50",
-      "disabled:cursor-not-allowed disabled:text-accent-500 disabled:shadow-accent-200",
-      "disabled:hover:bg-accent-50",
-      "disabled:active:bg-accent-50",
-      "disabled:focus:bg-accent-50",
+      "hoverable:hover:bg-accent-100",
     ),
     shadow: clsx(
-      "text-accent-700",
-      "hover:text-accent-950",
-      "active:text-accent-900",
-      "focus:text-accent-900",
-      "disabled:cursor-not-allowed disabled:text-accent-500",
-      "disabled:hover:text-accent-500",
-      "disabled:active:text-accent-500",
-      "disabled:focus:text-accent-500",
+      "text-accent-950",
+      "hoverable:text-accent-500",
+      "hoverable:hover:text-accent-950",
+      "disabled:cursor-not-allowed disabled:bg-transparent disabled:text-accent-200",
+      "hoverable:disabled:hover:bg-transparent hoverable:disabled:hover:text-accent-200",
     ),
-    danger: clsx(
-      "bg-red-950 text-accent-950",
-      "hover:bg-red-800",
-      "active:bg-red-900",
-      "focus:bg-red-900",
-      "disabled:cursor-not-allowed disabled:bg-accent-200 disabled:text-accent-500",
-      "disabled:hover:bg-accent-200",
-      "disabled:active:bg-accent-200",
-      "disabled:focus:bg-accent-200",
-    ),
+    danger: clsx("bg-red-950 text-accent-950", "hoverable:hover:bg-red-800"),
   };
 
   return twMerge(
     clsx(
       text && "px-4 py-2",
       (loading || (text && icon)) && "gap-2",
-      !text && icon && "size-[30px] shrink-0",
+      !text && icon && "size-[1.875rem] shrink-0",
       "flex items-center justify-center overflow-hidden rounded",
+      "disabled:cursor-not-allowed disabled:bg-accent-200 disabled:text-accent-300",
+      "hoverable:disabled:hover:bg-accent-200",
       variantClasses[variant],
       classes,
     ),

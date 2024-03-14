@@ -5,35 +5,49 @@
   const {
     elements: { close, content, overlay, portalled, title, trigger },
     states: { open },
-  } = createDialog({
-    forceVisible: true,
-    preventScroll: true,
-  });
+  } = createDialog();
 
   export const productAddOrUpdateDialogTrigger = trigger;
-  export const productAddOrUpdateDialogOpen = open;
-  export const productAddOrUpdateDialogPortalled = portalled;
 </script>
 
 <script lang="ts">
   import { getContext, onDestroy, tick } from "svelte";
+  import { fade } from "svelte/transition";
+  import { cubicInOut } from "svelte/easing";
   import { createDialog, melt } from "@melt-ui/svelte";
+  import clsx from "clsx";
   import {
     productStore,
     productDialogSchema,
     productsWithConfigSchema,
-    type DialogProduct,
   } from "$lib/entity";
   import { Route, apiMoonIMS, handleError, messageSchema } from "$lib/util";
-  import { Button, Input, addToast } from "$lib/ui";
-  import clsx from "clsx";
+  import {
+    Button,
+    Icon,
+    Input,
+    addToast,
+    generateButtonClasses,
+  } from "$lib/ui";
+
+  $: input = $productStore.dialog;
+  $: oldInput = input;
 
   const { generateSearchParamsProduct } = getContext<{
     generateSearchParamsProduct: () => string;
   }>("productContext");
 
-  let input: DialogProduct = $productStore.dialog;
-  let oldInput: DialogProduct = $productStore.dialog;
+  const resetDialog = async () => {
+    productStore.updateDialog({
+      id: undefined,
+      name: undefined,
+      quantity: 1,
+      buyPrice: undefined,
+      sellPrice: undefined,
+    });
+
+    await tick();
+  };
 
   let processState: "idle" | "loading" = "idle";
   const submitProduct = async () => {
@@ -46,7 +60,7 @@
           addToast({
             data: {
               state: "Peringatan",
-              message:
+              description:
                 "Pastikan untuk mengisi nama produk, jumlah produk, harga beli, dan harga jual.",
             },
           });
@@ -81,12 +95,14 @@
 
                 productStore.setProductStore(productsWithConfig);
 
+                await resetDialog();
+
                 await tick();
 
                 addToast({
                   data: {
                     state: "Sukses",
-                    message,
+                    description: message,
                   },
                 });
 
@@ -107,7 +123,7 @@
               addToast({
                 data: {
                   state: "Error",
-                  message:
+                  description:
                     "Tidak ada data pada produk yang dapat diperbaharui.",
                 },
               });
@@ -132,12 +148,14 @@
 
                   productStore.setProductStore(productsWithConfig);
 
+                  await resetDialog();
+
                   await tick();
 
                   addToast({
                     data: {
                       state: "Sukses",
-                      message,
+                      description: message,
                     },
                   });
 
@@ -158,146 +176,146 @@
       }
     }
   };
-
-  onDestroy(async () => {
-    productStore.updateDialog({
-      id: undefined,
-      name: undefined,
-      quantity: 1,
-      buyPrice: undefined,
-      sellPrice: undefined,
-    });
-
-    await tick();
-  });
 </script>
 
-<div
-  use:melt={$overlay}
-  class="fixed inset-0 z-40 flex items-center justify-center bg-accent-50/50 px-4"
->
-  <div
-    use:melt={$content}
-    class={clsx(
-      "flex w-full max-w-[640px] shrink-0 flex-col items-start overflow-hidden rounded-lg bg-accent-100 px-8 pb-4 shadow-border-inner",
-      "max-[360px]:px-4",
-    )}
-  >
+<div use:melt={$portalled}>
+  {#if $open}
     <div
-      class="flex h-4 w-full items-center justify-between gap-2 py-8 shadow-border-inner-b"
+      use:melt={$overlay}
+      transition:fade={{
+        duration: 300,
+        easing: cubicInOut,
+      }}
+      class="fixed inset-0 z-40 flex items-center justify-center bg-accent-50/50 p-4"
     >
-      <h3
-        use:melt={$title}
-        class="text font-semibold leading-none text-accent-950"
-      >
-        Tambah Produk
-      </h3>
-
       <div
-        use:melt={$close}
-        aria-label="close"
+        use:melt={$content}
+        class="flex w-full max-w-[40rem] flex-col items-start gap-4 overflow-hidden rounded-md bg-accent-50 p-4 shadow-border"
       >
-        <Button props={{ variant: "shadow", icon: { name: "close" } }} />
-      </div>
-    </div>
+        <div class="flex w-full flex-col items-start gap-2">
+          <div class="flex w-full items-center justify-between gap-4">
+            <h3
+              use:melt={$title}
+              class="text-base font-semibold leading-none text-accent-950"
+            >
+              {input.id ? "Tambah Produk" : "Perbaharui Produk"}
+            </h3>
 
-    <div class="flex w-full flex-col items-start gap-4 py-4">
-      <Input
-        props={{
-          label: "Nama Produk",
-          type: "text",
-          id: "name",
-          required: true,
-        }}
-        bind:value={input.name}
-      />
-
-      <div
-        class={clsx("flex w-full items-start gap-4", "max-[510px]:flex-col")}
-      >
-        <Input
-          props={{
-            containerClasses: clsx(
-              "w-[calc((100%_-_16px)_/_3_*_0.75)]",
-              "max-[510px]:w-full",
-            ),
-            label: "Jumlah Produk",
-            type: "number",
-            id: "quantity",
-            min: "1",
-            required: true,
-          }}
-          bind:value={input.quantity}
-        />
-
-        <div
-          class={clsx(
-            "flex w-[calc((100%_-_16px)_/_3_*_2.25)] items-start gap-4",
-            "max-[510px]:w-full max-[510px]:flex-col",
-          )}
-        >
-          <Input
-            props={{
-              containerClasses: clsx(
-                "w-[calc((100%_-_16px)_/_2)]",
-                "max-[510px]:w-full",
-              ),
-              label: "Harga Beli",
-              type: "number",
-              id: "buy-price",
-              min: "1",
-              placeholder: "1000",
-              required: true,
-            }}
-            bind:value={input.buyPrice}
-          />
-
-          <Input
-            props={{
-              containerClasses: clsx(
-                "w-[calc((100%_-_16px)_/_2)]",
-                "max-[510px]:w-full",
-              ),
-              label: "Harga Jual",
-              type: "number",
-              id: "sell-price",
-              min: "1",
-              placeholder: "1000",
-              required: true,
-            }}
-            bind:value={input.sellPrice}
-          />
+            <button
+              use:melt={$close}
+              on:m-click={resetDialog}
+              on:m-keydown={resetDialog}
+              class={generateButtonClasses({ icon: true, variant: "shadow" })}
+            >
+              <div class="flex h-[0.875rem] items-center justify-center">
+                <Icon
+                  props={{
+                    name: "close",
+                    classes: clsx("size-5 shrink-0"),
+                  }}
+                />
+              </div>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div
-        class={clsx(
-          "flex w-full items-center justify-end gap-x-4 gap-y-2 pt-2",
-          "max-[360px]:flex-col",
-        )}
-      >
-        <Button
-          props={{
-            text: "Batalkan",
-            variant: "outline",
-            class: "max-[360px]:w-full",
-          }}
-          on:click={() => {
-            open.set(false);
-          }}
-        />
+        <form class="flex w-full flex-col items-start gap-4">
+          <Input
+            props={{
+              label: "Nama Produk",
+              type: "text",
+              id: "name",
+              required: true,
+            }}
+            bind:value={input.name}
+          />
 
-        <Button
-          props={{
-            text: input.id ? "Simpan Perubahan" : "Tambah Produk",
-            class: "max-[360px]:w-full",
-            loading: processState === "loading",
-          }}
-          on:click={() => {
-            submitProduct();
-          }}
-        />
+          <div
+            class={clsx(
+              "flex w-full flex-col items-start gap-4",
+              "tablet:flex-row",
+            )}
+          >
+            <Input
+              props={{
+                containerClasses: clsx(
+                  "w-full",
+                  "tablet:w-[calc((100%_-_1rem)_/_2_*_0.35)]",
+                ),
+                label: "Jumlah Produk",
+                type: "number",
+                id: "quantity",
+                min: "1",
+                required: true,
+              }}
+              bind:value={input.quantity}
+            />
+
+            <div
+              class={clsx(
+                "flex w-full flex-col items-start gap-4",
+                "mobile-l:flex-row",
+                "tablet:w-[calc((100%_-_1rem)_/_2_*_1.65)]",
+              )}
+            >
+              <Input
+                props={{
+                  label: "Harga Beli",
+                  type: "number",
+                  id: "buy-price",
+                  min: "1",
+                  placeholder: "1000",
+                  required: true,
+                }}
+                bind:value={input.buyPrice}
+              />
+
+              <Input
+                props={{
+                  label: "Harga Jual",
+                  type: "number",
+                  id: "sell-price",
+                  min: "1",
+                  placeholder: "1000",
+                  required: true,
+                }}
+                bind:value={input.sellPrice}
+              />
+            </div>
+          </div>
+
+          <div
+            class={clsx(
+              "flex w-full flex-col items-center justify-end gap-x-4 gap-y-2 pt-4",
+              "mobile-l:flex-row",
+            )}
+          >
+            <Button
+              props={{
+                type: "button",
+                variant: "outline",
+                text: "Batalkan",
+                class: clsx("w-full", "mobile-l:w-auto"),
+              }}
+              on:click={async () => {
+                await resetDialog();
+
+                open.set(false);
+              }}
+            />
+
+            <Button
+              props={{
+                type: "button",
+                text: input.id ? "Simpan Perubahan" : "Tambah Produk",
+                class: clsx("w-full", "mobile-l:w-auto"),
+                loading: processState === "loading",
+              }}
+              on:click={submitProduct}
+            />
+          </div>
+        </form>
       </div>
     </div>
-  </div>
+  {/if}
 </div>

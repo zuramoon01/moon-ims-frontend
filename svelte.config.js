@@ -7,9 +7,6 @@ const config = {
   preprocess: sequence([vitePreprocess(), preprocessMeltUI()]),
   kit: {
     adapter: adapter(),
-    alias: {
-      "$app/*": "./*",
-    },
   },
 };
 

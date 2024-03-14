@@ -19,10 +19,15 @@
 <a
   {...attr}
   href={href}
-  class={generateButtonClasses({ text, icon, variant, classes })}
+  class={generateButtonClasses({
+    text: !!text,
+    icon: !!icon,
+    variant,
+    classes,
+  })}
 >
   {#if icon}
-    <div class="flex h-[14px] items-center justify-center">
+    <div class="flex h-[0.875rem] items-center justify-center">
       <Icon
         props={{
           ...icon,
@@ -32,5 +37,5 @@
     </div>
   {/if}
 
-  <span class="text-sm font-semibold leading-none">{text || ""}</span>
+  <span class="text-sm font-medium leading-none">{text || ""}</span>
 </a>

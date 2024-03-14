@@ -3,7 +3,11 @@
   context="module"
 >
   export interface CheckboxProps {
-    value: boolean | "indeterminate";
+    state: boolean | "indeterminate";
+    required?: boolean | undefined;
+    disabled?: boolean | undefined;
+    name?: string | undefined;
+    value?: string | undefined;
   }
 </script>
 
@@ -14,13 +18,20 @@
 
   export let props: CheckboxProps;
 
+  $: ({ state, name, value, required, disabled } = props);
+
   const {
     elements: { input, root },
     helpers: { isChecked, isIndeterminate },
     states: { checked },
-  } = createCheckbox();
+  } = createCheckbox({
+    required,
+    disabled,
+    name,
+    value,
+  });
 
-  $: checked.set(props.value);
+  $: checked.set(state);
 </script>
 
 <button
