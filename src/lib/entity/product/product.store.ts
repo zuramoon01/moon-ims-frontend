@@ -1,6 +1,10 @@
 import { writable } from "svelte/store";
-import type { Product } from "$lib/entity";
-import { formatToRupiah } from "$lib/util";
+import type { Product, ProductsWithConfig } from "$lib/entity";
+import {
+  formatToRupiah,
+  type BaseConfig,
+  type ExtendedConfig,
+} from "$lib/util";
 
 type FormattedProduct = Product & {
   buyPriceInRupiah: string;
@@ -9,24 +13,11 @@ type FormattedProduct = Product & {
   totalSellPriceInRupiah: string;
 };
 
-type OrderByKey = keyof Omit<Product, "id">;
-type ConfigProduct = {
-  currentPage: number;
-  totalPage: number;
-  from: number;
-  to: number;
-  limit: number;
-  total: number;
-};
+export type ProductOrderByKey = keyof Omit<Product, "id">;
 
 type ProductStore = {
   data: Array<FormattedProduct>;
-  config: ConfigProduct & {
-    currentPageInString: string;
-    limitInString: string;
-    orderByKey: OrderByKey | null;
-    sortDirection: "ASC" | "DESC";
-  };
+  config: BaseConfig & ExtendedConfig<ProductOrderByKey>;
   selectedProductIds: Array<Product["id"]>;
 };
 
@@ -65,7 +56,7 @@ const createProductStore = () => {
       currentPage,
       limit,
       ...config
-    }: { products: Product[] } & ConfigProduct) => {
+    }: ProductsWithConfig) => {
       update((currentState) => {
         return {
           ...currentState,
@@ -83,7 +74,7 @@ const createProductStore = () => {
         };
       });
     },
-    sortProducts: (key: OrderByKey) => {
+    sortProducts: (key: ProductOrderByKey) => {
       update((currentState) => {
         let {
           config: { orderByKey, sortDirection },

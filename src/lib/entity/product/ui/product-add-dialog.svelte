@@ -177,8 +177,8 @@
           </div>
 
           <form
-            on:submit|preventDefault={submitProduct}
             class="flex w-full flex-col items-start gap-4"
+            on:submit|preventDefault={submitProduct}
           >
             <Input
               props={{

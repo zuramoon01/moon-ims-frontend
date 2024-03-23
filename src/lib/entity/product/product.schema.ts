@@ -31,8 +31,20 @@ export const productsWithConfigSchema = z.object({
   total: z.number(),
 });
 
+export type ProductsWithConfig = z.infer<typeof productsWithConfigSchema>;
+
 export const searchParamsProductSchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(25).default(15),
 });
 export type SearchParamsProduct = z.infer<typeof searchParamsProductSchema>;
+
+export const productsSearchSchema = z.array(
+  z.object({
+    id: z.number(),
+    name: z.string(),
+    quantity: z.number(),
+    // buyPrice: z.number(),
+    // sellPrice: z.number(),
+  }),
+);

@@ -1,7 +1,7 @@
-import type { Product } from "$lib/entity";
+import type { ProductOrderByKey } from "$lib/entity";
 
 export const productTableTitles: Array<{
-  key: keyof Omit<Product, "id">;
+  key: ProductOrderByKey;
   text: string;
   classes: string;
 }> = [

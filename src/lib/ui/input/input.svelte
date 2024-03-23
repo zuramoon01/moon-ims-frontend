@@ -9,7 +9,7 @@
   $: ({ containerClasses, label, id, class: classes, ...attr } = props);
 </script>
 
-<fieldset
+<div
   class={twMerge(
     clsx("flex w-full flex-col items-start gap-2", containerClasses),
   )}
@@ -34,4 +34,4 @@
       ),
     )}
   />
-</fieldset>
+</div>

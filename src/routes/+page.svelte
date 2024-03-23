@@ -138,7 +138,7 @@
     await getProducts();
   };
 
-  let getProductsInterval: number | undefined;
+  let getProductsInterval: ReturnType<typeof setInterval>;
 
   onMount(async () => {
     const { search } = $page.url;
