@@ -1,33 +1,24 @@
-<script
-  lang="ts"
-  context="module"
->
-  export type ToastState = "Sukses" | "Peringatan" | "Error";
-
-  export type ToastData = {
-    state: ToastState;
-    title?: string;
-    description: string;
-  };
-
-  const {
-    elements: { content, title: titleEl, description: descriptionEl, close },
-    helpers,
-    states: { toasts },
-    actions: { portal },
-  } = createToaster<ToastData>();
-
-  export const addToast = helpers.addToast;
-</script>
-
 <script lang="ts">
   import { flip } from "svelte/animate";
   import { fly } from "svelte/transition";
   import { cubicInOut } from "svelte/easing";
   import { createToaster, melt } from "@melt-ui/svelte";
   import clsx from "clsx";
-  import { Icon, generateButtonClasses } from "$lib/ui";
+  import {
+    toaster,
+    Icon,
+    generateButtonClasses,
+    type ToastState,
+    // addToast,
+  } from "$lib/ui";
   // import { onMount } from "svelte";
+
+  const {
+    elements: { content, title: titleEl, description: descriptionEl, close },
+    helpers,
+    states: { toasts },
+    actions: { portal },
+  } = toaster;
 
   const toastStateClass: Record<ToastState, Array<string> | string> = {
     Sukses: "bg-green-500",
