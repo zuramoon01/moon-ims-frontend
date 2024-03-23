@@ -71,6 +71,7 @@
     class="relative flex w-full items-center"
   >
     <input
+      autocomplete="off"
       id="search-product"
       class="flex w-full items-start justify-center rounded bg-accent-50 py-2 pl-4 pr-10 text-sm font-medium leading-none shadow-border"
       placeholder="Cari nama produk"
