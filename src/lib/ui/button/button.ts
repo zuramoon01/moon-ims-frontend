@@ -1,3 +1,7 @@
+import type {
+  HTMLAnchorAttributes,
+  HTMLButtonAttributes,
+} from "svelte/elements";
 import { twMerge } from "tailwind-merge";
 import clsx from "clsx";
 import type { IconProps } from "$lib/ui";
@@ -9,6 +13,12 @@ export interface BaseButtonProps {
   text?: string;
   icon?: IconProps;
 }
+
+export interface ButtonProps extends BaseButtonProps, HTMLButtonAttributes {
+  loading?: boolean;
+}
+
+export interface LinkProps extends BaseButtonProps, HTMLAnchorAttributes {}
 
 export const generateButtonClasses = ({
   text,

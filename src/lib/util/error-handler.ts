@@ -1,17 +1,17 @@
 import { AxiosError } from "axios";
 import { ZodError, z } from "zod";
-import { addToast } from "../ui";
-import { messageSchema } from ".";
+import { addToast } from "$lib/ui";
+import { messageSchema } from "$lib/util";
 
 export const handleError = (error: unknown, message: string) => {
-  console.log(`Error : ${message}`);
+  console.error(`Error : ${message}`);
 
   if (error instanceof AxiosError) {
     handleAxiosError(error);
   } else if (error instanceof ZodError) {
     handleZodError(error);
   } else {
-    console.log(error);
+    console.error(error);
   }
 };
 
@@ -34,16 +34,16 @@ const handleAxiosError = ({
         },
       });
     } else {
-      console.log({ data, status, headers });
+      console.error({ data, status, headers });
     }
   } else if (request) {
-    console.log(request);
+    console.error(request);
   } else {
-    console.log("Error", message);
+    console.error("Error", message);
   }
-  console.log(config);
+  console.error(config);
 };
 
 const handleZodError = (error: ZodError) => {
-  console.log(error.format());
+  console.error(error.format());
 };

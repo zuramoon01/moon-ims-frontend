@@ -1,4 +1,2 @@
-export * from "./icons";
-
+export * from "./icon";
 export { default as Icon } from "./Icon.svelte";
-export * from "./Icon.svelte";

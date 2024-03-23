@@ -1,15 +1,7 @@
-<script
-  lang="ts"
-  context="module"
->
-  export interface LinkProps extends BaseButtonProps, HTMLAnchorAttributes {}
-</script>
-
 <script lang="ts">
-  import type { HTMLAnchorAttributes } from "svelte/elements";
   import { twMerge } from "tailwind-merge";
   import clsx from "clsx";
-  import { Icon, generateButtonClasses, type BaseButtonProps } from "$lib/ui";
+  import { Icon, generateButtonClasses, type LinkProps } from "$lib/ui";
 
   export let props: LinkProps;
 

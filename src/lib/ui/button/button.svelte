@@ -1,21 +1,11 @@
-<script
-  lang="ts"
-  context="module"
->
-  export interface ButtonProps extends BaseButtonProps, HTMLButtonAttributes {
-    loading?: boolean;
-  }
-</script>
-
 <script lang="ts">
-  import type { HTMLButtonAttributes } from "svelte/elements";
   import { twMerge } from "tailwind-merge";
   import clsx from "clsx";
   import {
     CircleLoader,
-    Icon,
     generateButtonClasses,
-    type BaseButtonProps,
+    Icon,
+    type ButtonProps,
   } from "$lib/ui";
 
   export let props: ButtonProps;

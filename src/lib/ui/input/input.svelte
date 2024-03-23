@@ -1,17 +1,7 @@
-<script
-  lang="ts"
-  context="module"
->
-  export interface InputProps extends Omit<HTMLInputAttributes, "value"> {
-    containerClasses?: string | null;
-    label?: string;
-  }
-</script>
-
 <script lang="ts">
-  import type { HTMLInputAttributes } from "svelte/elements";
   import { twMerge } from "tailwind-merge";
   import clsx from "clsx";
+  import type { InputProps } from "$lib/ui";
 
   export let props: InputProps;
   export let value: any;

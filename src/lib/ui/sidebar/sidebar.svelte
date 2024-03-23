@@ -1,24 +1,9 @@
-<script lang="ts">
+<script>
   import { page } from "$app/stores";
-  import clsx from "clsx";
-  import { Route, appStore } from "$lib/util";
-  import { Button, Link, type LinkProps } from "$lib/ui";
   import { twMerge } from "tailwind-merge";
-
-  $: ({ showSidebar } = $appStore);
-
-  const navs: Array<LinkProps> = [
-    {
-      text: "Produk",
-      href: Route.Product,
-      icon: { name: "inventory" },
-    },
-    {
-      text: "Transaksi",
-      href: Route.Transaction,
-      icon: { name: "receipt" },
-    },
-  ];
+  import clsx from "clsx";
+  import { appStore } from "$lib/store";
+  import { Button, Link, navs } from "$lib/ui";
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -27,7 +12,7 @@
   class={clsx(
     "fixed left-0 top-0 z-0 h-full w-full cursor-pointer bg-accent-50/50",
     "tablet:hidden",
-    !showSidebar && "hidden",
+    !$appStore.showSidebar && "hidden",
   )}
   on:click={() => {
     appStore.toggleSidebar(false);
@@ -38,7 +23,7 @@
   class={twMerge(
     clsx(
       "fixed top-0 z-10 flex h-full w-full max-w-sidebar flex-col items-start justify-between gap-8 bg-accent-50 p-4 shadow-border-inner-r transition-all duration-500",
-      showSidebar ? "left-0" : "-left-sidebar",
+      $appStore.showSidebar ? "left-0" : "-left-sidebar",
       "tablet:left-0",
     ),
   )}

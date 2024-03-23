@@ -2,20 +2,17 @@
   import { flip } from "svelte/animate";
   import { fly } from "svelte/transition";
   import { cubicInOut } from "svelte/easing";
-  import { createToaster, melt } from "@melt-ui/svelte";
+  import { melt } from "@melt-ui/svelte";
   import clsx from "clsx";
   import {
     toaster,
     Icon,
     generateButtonClasses,
     type ToastState,
-    // addToast,
   } from "$lib/ui";
-  // import { onMount } from "svelte";
 
   const {
     elements: { content, title: titleEl, description: descriptionEl, close },
-    helpers,
     states: { toasts },
     actions: { portal },
   } = toaster;
@@ -25,17 +22,6 @@
     Peringatan: "bg-yellow-500",
     Error: "bg-red-500",
   };
-
-  // onMount(() => {
-  //   addToast({
-  //     data: {
-  //       state: "Sukses",
-  //       description:
-  //         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec feugiat turpis et neque feugiat malesuada.",
-  //     },
-  //     closeDelay: 5 * 60 * 1000,
-  //   });
-  // });
 </script>
 
 <div

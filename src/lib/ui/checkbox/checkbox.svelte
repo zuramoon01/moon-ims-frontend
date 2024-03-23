@@ -1,20 +1,7 @@
-<script
-  lang="ts"
-  context="module"
->
-  export interface CheckboxProps {
-    state: boolean | "indeterminate";
-    required?: boolean | undefined;
-    disabled?: boolean | undefined;
-    name?: string | undefined;
-    value?: string | undefined;
-  }
-</script>
-
 <script lang="ts">
   import { createCheckbox, melt } from "@melt-ui/svelte";
   import clsx from "clsx";
-  import { Icon } from "$lib/ui";
+  import { Icon, type CheckboxProps } from "$lib/ui";
 
   export let props: CheckboxProps;
 

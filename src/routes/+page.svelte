@@ -6,79 +6,48 @@
   import { fade, fly } from "svelte/transition";
   import { cubicInOut } from "svelte/easing";
   import clsx from "clsx";
+  import { apiMoonIMS } from "$lib/api";
+  import { appStore } from "$lib/store";
   import {
+    ProductAddDialog,
+    ProductConfirmationDeleteDialog,
+    ProductUpdateDialog,
     productStore,
     productTableTitles,
     productsWithConfigSchema,
-    ProductAddOrUpdateDialog,
-    productAddOrUpdateDialogTrigger,
-    ProductConfirmationDeleteDialog,
-    productConfirmationDeleteDialogTrigger,
   } from "$lib/entity";
-  import { apiMoonIMS, appStore, handleError, Route } from "$lib/util";
-  import {
-    Button,
-    Checkbox,
-    CircleLoader,
-    Icon,
-    Input,
-    generateButtonClasses,
-  } from "$lib/ui";
-  import { melt } from "@melt-ui/svelte";
+  import { Button, Checkbox, CircleLoader, Icon, Input } from "$lib/ui";
+  import { Route, handleError } from "$lib/util";
 
   let pageState: "idle" | "loading" = "loading";
 
   $: ({
-    currentPage,
-    totalPage,
-    from,
-    to,
-    limitInString,
-    total,
-    orderByKey,
-    sortDirection,
-  } = $productStore.config);
+    data: products,
+    config: {
+      currentPage,
+      totalPage,
+      from,
+      to,
+      limitInString,
+      total,
+      orderByKey,
+      sortDirection,
+    },
+    selectedProductIds,
+  } = $productStore);
 
-  $: totalProducts = $productStore.data.length;
-  $: totalSelectedProductIds = $productStore.selectedProductIds.length;
+  $: totalProducts = products.length;
+  $: totalSelectedProductIds = selectedProductIds.length;
+
   let footerHeight = 0;
 
-  const generateSearchParamsProduct = () => {
-    return new URLSearchParams(
-      Array.from($page.url.searchParams.entries()),
-    ).toString();
+  const getSearchParamsProductString = () => {
+    return $page.url.searchParams.toString();
   };
 
   setContext("productContext", {
-    generateSearchParamsProduct,
+    getSearchParamsProductString,
   });
-
-  const getProducts = async () => {
-    pageState = "loading";
-
-    try {
-      const searchParamsProduct = generateSearchParamsProduct();
-
-      const { status, data } = await apiMoonIMS.get(
-        `${Route.Api.Product}?${searchParamsProduct}`,
-      );
-
-      if (status === 200 && data.data) {
-        const productsWithConfig = productsWithConfigSchema.parse(data.data);
-
-        productStore.setProductStore(productsWithConfig);
-
-        await tick();
-
-        inputLimit = $productStore.config.limitInString;
-        inputPage = $productStore.config.currentPageInString;
-      }
-    } catch (error) {
-      handleError(error, "Fungsi getProducts Halaman Produk");
-    }
-
-    pageState = "idle";
-  };
 
   const updateProductPage = async (params: { page: string; limit: string }) => {
     const searchParamsProduct = new URLSearchParams(params).toString();
@@ -87,38 +56,35 @@
   };
 
   let inputLimit = "0";
-  const handleSubmitLimit = async () => {
-    let value = Number(inputLimit);
-    value = value !== 0 ? (value < 1 ? 1 : value > 25 ? 25 : value) : 15;
-
-    inputLimit = value.toString();
-
-    const params = {
-      page: inputPage,
-      limit: inputLimit,
-    };
-
-    await updateProductPage(params);
-
-    await getProducts();
-  };
-
   let inputPage = "0";
-  const handleSubmitPage = async () => {
-    let value = Number(inputPage);
-    value =
-      value !== 0 ? (value < 1 ? 1 : value > totalPage ? totalPage : value) : 1;
+  const getProducts = async () => {
+    pageState = "loading";
 
-    inputPage = value.toString();
+    try {
+      const searchParamsProductString = getSearchParamsProductString();
 
-    const params = {
-      page: inputPage,
-      limit: inputLimit,
-    };
+      const { status, data } = await apiMoonIMS.get(
+        `${Route.Api.Product}?${searchParamsProductString}`,
+      );
 
-    await updateProductPage(params);
+      if (status !== 200 || !data.data) {
+        console.error("getProducts status not 200 or data not found");
+        return;
+      }
 
-    await getProducts();
+      const productsWithConfig = productsWithConfigSchema.parse(data.data);
+
+      productStore.setProductStore(productsWithConfig);
+
+      await tick();
+
+      inputLimit = $productStore.config.limitInString;
+      inputPage = $productStore.config.currentPageInString;
+    } catch (error) {
+      handleError(error, "Fungsi getProducts Halaman Produk");
+    }
+
+    pageState = "idle";
   };
 
   const handlePage = async (step: "previous" | "next") => {
@@ -139,7 +105,40 @@
     await getProducts();
   };
 
-  let getProductsInterval: NodeJS.Timeout;
+  const handleSubmitLimit = async () => {
+    let value = Number(inputLimit);
+    value = value !== 0 ? (value < 1 ? 1 : value > 25 ? 25 : value) : 15;
+
+    inputLimit = value.toString();
+
+    const params = {
+      page: inputPage,
+      limit: inputLimit,
+    };
+
+    await updateProductPage(params);
+
+    await getProducts();
+  };
+
+  const handleSubmitPage = async () => {
+    let value = Number(inputPage);
+    value =
+      value !== 0 ? (value < 1 ? 1 : value > totalPage ? totalPage : value) : 1;
+
+    inputPage = value.toString();
+
+    const params = {
+      page: inputPage,
+      limit: inputLimit,
+    };
+
+    await updateProductPage(params);
+
+    await getProducts();
+  };
+
+  let getProductsInterval: number | undefined;
 
   onMount(async () => {
     const { search } = $page.url;
@@ -173,8 +172,6 @@
 </svelte:head>
 
 <div class={clsx("flex w-full flex-col items-start px-4", "tablet:px-8")}>
-  <ProductAddOrUpdateDialog />
-
   <header class="flex h-16 w-full items-center justify-between gap-8">
     <div class="flex items-center gap-4">
       <Button
@@ -193,42 +190,7 @@
       <h1 class="text-xl font-bold leading-none text-accent-950">Produk</h1>
     </div>
 
-    <button
-      use:melt={$productAddOrUpdateDialogTrigger}
-      on:m-click={async () => {
-        productStore.updateDialog({
-          id: undefined,
-          name: undefined,
-          quantity: 1,
-          buyPrice: undefined,
-          sellPrice: undefined,
-        });
-
-        await tick();
-      }}
-      class={generateButtonClasses({
-        text: true,
-        icon: true,
-        classes: clsx(
-          "size-[1.875rem] px-0 py-0",
-          "tablet:size-auto tablet:px-4 tablet:py-2",
-        ),
-      })}
-    >
-      <div class="flex h-[0.875rem] items-center justify-center">
-        <Icon
-          props={{
-            name: "plus",
-            classes: clsx("size-5 shrink-0"),
-          }}
-        />
-      </div>
-
-      <span
-        class={clsx("hidden text-sm font-medium leading-none", "tablet:inline")}
-        >Tambah Produk</span
-      >
-    </button>
+    <ProductAddDialog />
   </header>
 
   {#if pageState === "loading"}
@@ -327,23 +289,15 @@
           <div
             class="flex w-[calc((100%_-_2rem)_/_6_*_2)] min-w-[9.375rem] items-center px-4 py-2 shadow-border-inner-br"
           >
-            <button
-              use:melt={$productAddOrUpdateDialogTrigger}
-              on:m-click={async () => {
-                productStore.updateDialog({
-                  id,
-                  name,
-                  quantity,
-                  buyPrice,
-                  sellPrice,
-                });
-
-                await tick();
+            <ProductUpdateDialog
+              props={{
+                id,
+                name,
+                quantity,
+                buyPrice,
+                sellPrice,
               }}
-              class="flex h-full w-full items-center"
-            >
-              <span class="text-sm leading-none text-accent-800">{name}</span>
-            </button>
+            />
           </div>
 
           <div
@@ -387,111 +341,104 @@
       {:else}
         Tidak ada produk
       {/each}
-    </section>
 
-    <ProductConfirmationDeleteDialog />
-
-    {#if total > 0}
-      <footer
-        bind:clientHeight={footerHeight}
-        class={clsx(
-          "flex min-h-10 w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 overflow-auto bg-accent-100 px-4 py-2",
-        )}
-      >
-        {#if totalSelectedProductIds > 0}
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span
-              class="text-nowrap text-sm font-medium leading-none text-accent-950"
-              >{totalSelectedProductIds} Produk terpilih</span
-            >
-
-            <button
-              use:melt={$productConfirmationDeleteDialogTrigger}
-              type="button"
-              class={generateButtonClasses({ text: true, variant: "danger" })}
-              >Hapus</button
-            >
-          </div>
-        {:else}
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <form
-              on:submit|preventDefault={handleSubmitLimit}
-              class="flex items-center gap-4"
-            >
-              <Input
-                props={{
-                  type: "number",
-                  min: "1",
-                  max: "25",
-                  class: clsx("w-10 items-center px-2 text-center"),
-                }}
-                bind:value={inputLimit}
-              />
-
-              <span class="text-nowrap text-sm leading-none"
-                >Produk per halaman</span
+      {#if total > 0}
+        <footer
+          bind:clientHeight={footerHeight}
+          class={clsx(
+            "flex min-h-10 w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 overflow-auto bg-accent-100 px-4 py-2",
+          )}
+        >
+          {#if totalSelectedProductIds > 0}
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span
+                class="text-nowrap text-sm font-medium leading-none text-accent-950"
+                >{totalSelectedProductIds} Produk terpilih</span
               >
-            </form>
 
-            <span class="text-sm font-medium leading-none text-accent-950"
-              >Menampilkan {from} - {to} produk dari {total} produk</span
-            >
-          </div>
-
-          <div class="flex items-center gap-4">
-            <form
-              on:submit|preventDefault={handleSubmitPage}
-              class="flex items-center gap-4"
-            >
-              <Input
-                props={{
-                  type: "number",
-                  min: "1",
-                  max: totalPage,
-                  class: clsx("w-10 items-center px-2 text-center"),
-                }}
-                bind:value={inputPage}
-              />
-
-              <span class="text-nowrap text-sm font-medium leading-none"
-                >dari {totalPage} halaman</span
+              <ProductConfirmationDeleteDialog />
+            </div>
+          {:else}
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <form
+                on:submit|preventDefault={handleSubmitLimit}
+                class="flex items-center gap-4"
               >
-            </form>
+                <Input
+                  props={{
+                    type: "number",
+                    min: "1",
+                    max: "25",
+                    class: clsx("w-10 items-center px-2 text-center"),
+                  }}
+                  bind:value={inputLimit}
+                />
+
+                <span class="text-nowrap text-sm leading-none"
+                  >Produk per halaman</span
+                >
+              </form>
+
+              <span class="text-sm font-medium leading-none text-accent-950"
+                >Menampilkan {from} - {to} produk dari {total} produk</span
+              >
+            </div>
 
             <div class="flex items-center gap-4">
-              <Button
-                props={{
-                  type: "button",
-                  variant: "outline",
-                  icon: {
-                    name: "chevronLeft",
-                    classes: clsx("size-5"),
-                  },
-                  disabled: currentPage <= 1,
-                }}
-                on:click={() => {
-                  handlePage("previous");
-                }}
-              />
+              <form
+                on:submit|preventDefault={handleSubmitPage}
+                class="flex items-center gap-4"
+              >
+                <Input
+                  props={{
+                    type: "number",
+                    min: "1",
+                    max: totalPage,
+                    class: clsx("w-10 items-center px-2 text-center"),
+                  }}
+                  bind:value={inputPage}
+                />
 
-              <Button
-                props={{
-                  type: "button",
-                  variant: "outline",
-                  icon: {
-                    name: "chevronRight",
-                    classes: clsx("size-5"),
-                  },
-                  disabled: currentPage >= totalPage,
-                }}
-                on:click={() => {
-                  handlePage("next");
-                }}
-              />
+                <span class="text-nowrap text-sm font-medium leading-none"
+                  >dari {totalPage} halaman</span
+                >
+              </form>
+
+              <div class="flex items-center gap-4">
+                <Button
+                  props={{
+                    type: "button",
+                    variant: "outline",
+                    icon: {
+                      name: "chevronLeft",
+                      classes: clsx("size-5"),
+                    },
+                    disabled: currentPage <= 1,
+                  }}
+                  on:click={() => {
+                    handlePage("previous");
+                  }}
+                />
+
+                <Button
+                  props={{
+                    type: "button",
+                    variant: "outline",
+                    icon: {
+                      name: "chevronRight",
+                      classes: clsx("size-5"),
+                    },
+                    disabled: currentPage >= totalPage,
+                  }}
+                  on:click={() => {
+                    handlePage("next");
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        {/if}
-      </footer>
-    {/if}
+          {/if}
+        </footer>
+      {/if}
+    </section>
   {/if}
 </div>

@@ -1,7 +1,14 @@
-<script
-  lang="ts"
-  context="module"
->
+<script lang="ts">
+  import { getContext, tick } from "svelte";
+  import { fade } from "svelte/transition";
+  import { cubicInOut } from "svelte/easing";
+  import { createDialog, melt } from "@melt-ui/svelte";
+  import clsx from "clsx";
+  import { apiMoonIMS } from "$lib/api";
+  import { productStore, productsWithConfigSchema } from "$lib/entity";
+  import { Button, Icon, addToast, generateButtonClasses } from "$lib/ui";
+  import { Route, handleError, messageSchema } from "$lib/util";
+
   const {
     elements: {
       close,
@@ -15,69 +22,75 @@
     states: { open },
   } = createDialog();
 
-  export const productConfirmationDeleteDialogTrigger = trigger;
-</script>
-
-<script lang="ts">
-  import { getContext, tick } from "svelte";
-  import { fade } from "svelte/transition";
-  import { cubicInOut } from "svelte/easing";
-  import { createDialog, melt } from "@melt-ui/svelte";
-  import clsx from "clsx";
-  import { productStore, productsWithConfigSchema } from "$lib/entity";
-  import { Button, Icon, addToast, generateButtonClasses } from "$lib/ui";
-  import { Route, apiMoonIMS, handleError, messageSchema } from "$lib/util";
-
-  const { generateSearchParamsProduct } = getContext<{
-    generateSearchParamsProduct: () => string;
+  const { getSearchParamsProductString } = getContext<{
+    getSearchParamsProductString: () => string;
   }>("productContext");
 
   let processState: "idle" | "loading" = "idle";
   const deleteProducts = async () => {
-    if (processState === "idle") {
-      processState = "loading";
+    try {
+      if (processState === "idle") {
+        processState = "loading";
 
-      try {
-        const searchParamsProduct = generateSearchParamsProduct();
+        const searchParamsProductString = getSearchParamsProductString();
 
         const { status, data } = await apiMoonIMS.delete(
-          `${Route.Api.Product}?${searchParamsProduct}`,
+          `${Route.Api.Product}?${searchParamsProductString}`,
           {
             data: { ids: $productStore.selectedProductIds },
           },
         );
 
-        if (data.message) {
-          const message = messageSchema.parse(data.message);
+        if (!data.message) {
+          console.error(
+            "Fungsi deleteProducts UI ProductConfirmationDeleteDialog no message",
+          );
 
-          if (status === 200 && data.data) {
-            const productsWithConfig = productsWithConfigSchema.parse(
-              data.data,
-            );
+          processState = "idle";
 
-            productStore.setProductStore(productsWithConfig);
-            productStore.removeAllSelectedProductId();
-
-            await tick();
-
-            addToast({
-              data: {
-                state: "Sukses",
-                description: message,
-              },
-            });
-          }
+          return;
         }
-      } catch (error) {
-        handleError(error, "Fungsi deleteProducts Halaman Produk");
+
+        const message = messageSchema.parse(data.message);
+
+        if (status !== 200 || !data.data) {
+          console.error(
+            "Fungsi submitProduct UI ProductUpdateDialog status not 200 or data not found",
+          );
+
+          processState = "idle";
+
+          return;
+        }
+
+        const productsWithConfig = productsWithConfigSchema.parse(data.data);
+
+        productStore.setProductStore(productsWithConfig);
+        productStore.removeAllSelectedProductId();
+
+        await tick();
+
+        addToast({
+          data: {
+            state: "Sukses",
+            description: message,
+          },
+        });
+
+        processState = "idle";
+
+        open.set(false);
       }
-
-      open.set(false);
-
-      processState = "idle";
+    } catch (error) {
+      handleError(error, "Fungsi deleteProducts Halaman Produk");
     }
   };
 </script>
+
+<button
+  use:melt={$trigger}
+  class={generateButtonClasses({ text: true, variant: "danger" })}>Hapus</button
+>
 
 <div use:melt={$portalled}>
   {#if $open}

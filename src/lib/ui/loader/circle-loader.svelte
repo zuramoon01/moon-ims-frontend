@@ -1,14 +1,6 @@
-<script
-  lang="ts"
-  context="module"
->
-  export interface CircleLoaderProps {
-    classes?: string | null;
-  }
-</script>
-
 <script lang="ts">
   import { twMerge } from "tailwind-merge";
+  import type { CircleLoaderProps } from "$lib/ui";
 
   export let props: CircleLoaderProps = {};
 

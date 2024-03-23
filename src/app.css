@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 body {
-  @apply flex min-h-[100dvh] w-full bg-accent-50 text-accent-950;
+  @apply flex min-h-[100dvh] w-full bg-accent-50 font-inter text-accent-950;
 }
 
 /* Hide Arrows From Input Number /*

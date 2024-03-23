@@ -1,3 +1,8 @@
+export interface IconProps {
+  name: IconName;
+  classes?: string;
+}
+
 export interface Icon {
   viewBox: string;
   paths: Array<{

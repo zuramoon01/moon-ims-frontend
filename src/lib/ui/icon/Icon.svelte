@@ -1,17 +1,7 @@
-<script
-  context="module"
-  lang="ts"
->
-  export interface IconProps {
-    name: IconName;
-    classes?: string;
-  }
-</script>
-
 <script lang="ts">
   import { twMerge } from "tailwind-merge";
   import clsx from "clsx";
-  import { icons, type IconName } from "$lib/ui";
+  import { icons, type IconProps } from "$lib/ui";
 
   export let props: IconProps;
 
