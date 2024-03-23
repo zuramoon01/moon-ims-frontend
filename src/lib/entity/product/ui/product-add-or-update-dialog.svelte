@@ -37,18 +37,6 @@
     generateSearchParamsProduct: () => string;
   }>("productContext");
 
-  const resetDialog = async () => {
-    productStore.updateDialog({
-      id: undefined,
-      name: undefined,
-      quantity: 1,
-      buyPrice: undefined,
-      sellPrice: undefined,
-    });
-
-    await tick();
-  };
-
   let processState: "idle" | "loading" = "idle";
   const submitProduct = async () => {
     if (processState === "idle") {

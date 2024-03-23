@@ -98,8 +98,6 @@
       limit: inputLimit,
     };
 
-    console.log(params);
-
     await updateProductPage(params);
 
     await getProducts();
@@ -197,7 +195,7 @@
 
     <button
       use:melt={$productAddOrUpdateDialogTrigger}
-      on:click={async () => {
+      on:m-click={async () => {
         productStore.updateDialog({
           id: undefined,
           name: undefined,
@@ -233,7 +231,7 @@
     </button>
   </header>
 
-  {#if pageState === "loading" || total <= 0}
+  {#if pageState === "loading"}
     <div class="flex w-full items-start justify-center">
       <CircleLoader />
     </div>
@@ -244,52 +242,54 @@
         max-height: calc(100vh - (4rem + ${footerHeight}px));
       `}
     >
-      <div class="flex min-h-[2.125rem] w-full bg-accent-50">
-        <div
-          class="flex min-w-8 items-center justify-center shadow-border-inner-br"
-        >
-          <Checkbox
-            props={{
-              state:
-                totalSelectedProductIds === 0
-                  ? false
-                  : totalSelectedProductIds === totalProducts
-                    ? true
-                    : "indeterminate",
-            }}
-            on:click={productStore.toggleAllSelectedProductId}
-          />
-        </div>
-
-        {#each productTableTitles as { key, text, classes } (key)}
-          <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <!-- svelte-ignore a11y-no-static-element-interactions -->
+      {#if total > 0}
+        <div class="flex min-h-[2.125rem] w-full bg-accent-50">
           <div
-            class={clsx(
-              "flex cursor-pointer items-center gap-2 px-4 shadow-border-inner-br",
-              "hover:bg-accent-100",
-              classes,
-            )}
-            on:click={async () => {
-              productStore.sortProducts(key);
-
-              await tick();
-            }}
+            class="flex min-w-8 items-center justify-center shadow-border-inner-br"
           >
-            <span class="text-sm leading-none text-accent-950">{text}</span>
-
-            {#if orderByKey === key}
-              <Icon
-                props={{
-                  name:
-                    sortDirection === "ASC" ? "arrowDropUp" : "arrowDropDown",
-                  classes: clsx("size-5"),
-                }}
-              />
-            {/if}
+            <Checkbox
+              props={{
+                state:
+                  totalSelectedProductIds === 0
+                    ? false
+                    : totalSelectedProductIds === totalProducts
+                      ? true
+                      : "indeterminate",
+              }}
+              on:click={productStore.toggleAllSelectedProductId}
+            />
           </div>
-        {/each}
-      </div>
+
+          {#each productTableTitles as { key, text, classes } (key)}
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <div
+              class={clsx(
+                "flex cursor-pointer items-center gap-2 px-4 shadow-border-inner-br",
+                "hover:bg-accent-100",
+                classes,
+              )}
+              on:click={async () => {
+                productStore.sortProducts(key);
+
+                await tick();
+              }}
+            >
+              <span class="text-sm leading-none text-accent-950">{text}</span>
+
+              {#if orderByKey === key}
+                <Icon
+                  props={{
+                    name:
+                      sortDirection === "ASC" ? "arrowDropUp" : "arrowDropDown",
+                    classes: clsx("size-5"),
+                  }}
+                />
+              {/if}
+            </div>
+          {/each}
+        </div>
+      {/if}
 
       {#each $productStore.data as { id, name, quantity, buyPrice, buyPriceInRupiah, totalBuyPriceInRupiah, sellPrice, sellPriceInRupiah, totalSellPriceInRupiah } (id)}
         <div
@@ -384,110 +384,114 @@
             >
           </div>
         </div>
+      {:else}
+        Tidak ada produk
       {/each}
     </section>
 
     <ProductConfirmationDeleteDialog />
 
-    <footer
-      bind:clientHeight={footerHeight}
-      class={clsx(
-        "flex min-h-10 w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 overflow-auto bg-accent-100 px-4 py-2",
-      )}
-    >
-      {#if totalSelectedProductIds > 0}
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span
-            class="text-nowrap text-sm font-medium leading-none text-accent-950"
-            >{totalSelectedProductIds} Produk terpilih</span
-          >
-
-          <button
-            use:melt={$productConfirmationDeleteDialogTrigger}
-            type="button"
-            class={generateButtonClasses({ text: true, variant: "danger" })}
-            >Hapus</button
-          >
-        </div>
-      {:else}
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <form
-            on:submit|preventDefault={handleSubmitLimit}
-            class="flex items-center gap-4"
-          >
-            <Input
-              props={{
-                type: "number",
-                min: "1",
-                max: "25",
-                class: clsx("w-10 items-center px-2 text-center"),
-              }}
-              bind:value={inputLimit}
-            />
-
-            <span class="text-nowrap text-sm leading-none"
-              >Produk per halaman</span
+    {#if total > 0}
+      <footer
+        bind:clientHeight={footerHeight}
+        class={clsx(
+          "flex min-h-10 w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 overflow-auto bg-accent-100 px-4 py-2",
+        )}
+      >
+        {#if totalSelectedProductIds > 0}
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span
+              class="text-nowrap text-sm font-medium leading-none text-accent-950"
+              >{totalSelectedProductIds} Produk terpilih</span
             >
-          </form>
 
-          <span class="text-sm font-medium leading-none text-accent-950"
-            >Menampilkan {from} - {to} produk dari {total} produk</span
-          >
-        </div>
-
-        <div class="flex items-center gap-4">
-          <form
-            on:submit|preventDefault={handleSubmitPage}
-            class="flex items-center gap-4"
-          >
-            <Input
-              props={{
-                type: "number",
-                min: "1",
-                max: totalPage,
-                class: clsx("w-10 items-center px-2 text-center"),
-              }}
-              bind:value={inputPage}
-            />
-
-            <span class="text-nowrap text-sm font-medium leading-none"
-              >dari {totalPage} halaman</span
+            <button
+              use:melt={$productConfirmationDeleteDialogTrigger}
+              type="button"
+              class={generateButtonClasses({ text: true, variant: "danger" })}
+              >Hapus</button
             >
-          </form>
+          </div>
+        {:else}
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <form
+              on:submit|preventDefault={handleSubmitLimit}
+              class="flex items-center gap-4"
+            >
+              <Input
+                props={{
+                  type: "number",
+                  min: "1",
+                  max: "25",
+                  class: clsx("w-10 items-center px-2 text-center"),
+                }}
+                bind:value={inputLimit}
+              />
+
+              <span class="text-nowrap text-sm leading-none"
+                >Produk per halaman</span
+              >
+            </form>
+
+            <span class="text-sm font-medium leading-none text-accent-950"
+              >Menampilkan {from} - {to} produk dari {total} produk</span
+            >
+          </div>
 
           <div class="flex items-center gap-4">
-            <Button
-              props={{
-                type: "button",
-                variant: "outline",
-                icon: {
-                  name: "chevronLeft",
-                  classes: clsx("size-5"),
-                },
-                disabled: currentPage <= 1,
-              }}
-              on:click={() => {
-                handlePage("previous");
-              }}
-            />
+            <form
+              on:submit|preventDefault={handleSubmitPage}
+              class="flex items-center gap-4"
+            >
+              <Input
+                props={{
+                  type: "number",
+                  min: "1",
+                  max: totalPage,
+                  class: clsx("w-10 items-center px-2 text-center"),
+                }}
+                bind:value={inputPage}
+              />
 
-            <Button
-              props={{
-                type: "button",
-                variant: "outline",
-                icon: {
-                  name: "chevronRight",
-                  classes: clsx("size-5"),
-                },
-                disabled: currentPage >= totalPage,
-              }}
-              on:click={() => {
-                handlePage("next");
-              }}
-            />
+              <span class="text-nowrap text-sm font-medium leading-none"
+                >dari {totalPage} halaman</span
+              >
+            </form>
+
+            <div class="flex items-center gap-4">
+              <Button
+                props={{
+                  type: "button",
+                  variant: "outline",
+                  icon: {
+                    name: "chevronLeft",
+                    classes: clsx("size-5"),
+                  },
+                  disabled: currentPage <= 1,
+                }}
+                on:click={() => {
+                  handlePage("previous");
+                }}
+              />
+
+              <Button
+                props={{
+                  type: "button",
+                  variant: "outline",
+                  icon: {
+                    name: "chevronRight",
+                    classes: clsx("size-5"),
+                  },
+                  disabled: currentPage >= totalPage,
+                }}
+                on:click={() => {
+                  handlePage("next");
+                }}
+              />
+            </div>
           </div>
-        </div>
-      {/if}
-    </footer>
+        {/if}
+      </footer>
+    {/if}
   {/if}
 </div>
