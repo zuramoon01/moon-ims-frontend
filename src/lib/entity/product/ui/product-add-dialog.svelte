@@ -103,6 +103,13 @@
         processState = "idle";
 
         open.set(false);
+
+        input = {
+          name: "",
+          quantity: "1",
+          buyPrice: "",
+          sellPrice: "",
+        };
       }
     } catch (error) {
       handleError(error, "Fungsi submitProduct UI ProductAddDialog");
