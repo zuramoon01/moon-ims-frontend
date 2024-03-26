@@ -63,7 +63,7 @@
 <aside
   class={twMerge(
     clsx(
-      "fixed top-0 z-10 flex h-full w-full max-w-sidebar flex-col items-start justify-between gap-8 bg-accent-50 p-4 shadow-border-inner-r transition-all duration-500",
+      "fixed top-0 z-10 flex h-full w-full max-w-sidebar flex-col items-start justify-between gap-8 overflow-hidden bg-accent-50 p-4 shadow-border-inner-r transition-all duration-500",
       $appStore.showSidebar ? "left-0" : "-left-sidebar",
       "tablet:left-0",
     ),
@@ -73,10 +73,8 @@
     <div
       class="flex h-12 w-full items-center justify-between gap-4 pb-4 shadow-border-inner-b"
     >
-      <h2
-        class="text-nowrap text-lg font-extrabold leading-none text-accent-950"
-      >
-        Kasih Murah Store
+      <h2 class="text-lg font-extrabold leading-none text-accent-950">
+        Toko Bangunan Dayat
       </h2>
 
       <Button

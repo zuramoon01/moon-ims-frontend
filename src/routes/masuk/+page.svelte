@@ -51,10 +51,10 @@
   };
 </script>
 
-<main class="flex w-full items-center justify-center border border-white p-4">
+<main class="flex w-full items-center justify-center p-4">
   <form
     on:submit|preventDefault={login}
-    class="flex w-full max-w-[25rem] flex-col gap-4 rounded px-4 py-8 shadow-border"
+    class="flex w-full max-w-[25rem] flex-col gap-4 overflow-hidden rounded px-4 py-8 shadow-border"
   >
     <header class="flex w-full items-center">
       <h1 class="text-2xl font-medium leading-none">Masuk</h1>
