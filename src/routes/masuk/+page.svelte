@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Cookies from "js-cookie";
   import clsx from "clsx";
   import { Button, Input, addToast } from "$lib/ui";
   import { Route, handleError, messageSchema } from "$lib/util";
@@ -30,13 +31,22 @@
 
         const message = messageSchema.parse(data.message);
 
-        if (status !== 200) {
-          console.error("Fungsi login Halaman Masuk status not 200");
+        if (status !== 200 || !data.token) {
+          console.error(
+            "Fungsi login Halaman Masuk status not 200 or token not found",
+          );
 
           processState = "idle";
 
           return;
         }
+
+        Cookies.set("token", data.token, {
+          path: "/",
+          sameSite: "strict",
+          expires: 1,
+          secure: true,
+        });
 
         addToast({
           data: {

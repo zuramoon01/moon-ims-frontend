@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
+  import Cookies from "js-cookie";
   import { twMerge } from "tailwind-merge";
   import clsx from "clsx";
   import { appStore } from "$lib/store";
@@ -41,9 +42,11 @@
           },
         });
 
-        processState = "idle";
-
         await goto(Route.Login);
+
+        Cookies.remove("token");
+
+        processState = "idle";
       } catch (error) {
         processState = "idle";
         handleError(error, "Fungsi logout");
