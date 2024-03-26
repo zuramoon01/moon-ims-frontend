@@ -33,11 +33,11 @@
           duration: 300,
           easing: cubicInOut,
         }}
-        class="fixed inset-0 z-40 flex items-center justify-center bg-accent-50/50 p-4"
+        class="fixed inset-0 z-40 flex items-start justify-center overflow-auto bg-accent-50/50 p-4"
       >
         <div
           use:melt={$content}
-          class="flex w-full max-w-[40rem] flex-col items-start gap-4 overflow-hidden rounded-md bg-accent-50 p-4 shadow-border"
+          class="my-auto flex w-full max-w-[40rem] flex-col items-start gap-4 overflow-hidden rounded-md bg-accent-50 p-4 shadow-border"
         >
           <div class="flex w-full flex-col items-start gap-2">
             <div class="flex w-full items-center justify-between gap-4">

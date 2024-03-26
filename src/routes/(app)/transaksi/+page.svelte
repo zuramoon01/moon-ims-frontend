@@ -203,137 +203,155 @@
       <CircleLoader />
     </div>
   {:else}
-    <section class="flex w-full flex-col items-start overflow-auto">
-      {#if total > 0}
-        <div class="flex min-h-[2.125rem] w-full bg-accent-50">
-          <div
-            class="flex min-w-8 items-center justify-center shadow-border-inner-br"
-          >
-            <Checkbox
-              props={{
-                state:
-                  totalSelectedTransactionIds === 0
-                    ? false
-                    : totalSelectedTransactionIds === totalTransactions
-                      ? true
-                      : "indeterminate",
-              }}
-              on:click={transactionStore.toggleAllSelectedTransactionId}
-            />
-          </div>
+    <section
+      class="flex max-h-[calc(100dvh_-_4rem)] min-h-[calc(25rem_-_4rem)] w-full flex-col items-start"
+    >
+      <div class="flex w-full flex-col items-start overflow-auto">
+        {#if total > 0}
+          <div class="flex min-h-[2.125rem] w-full shrink-0 bg-accent-50">
+            <div
+              class="flex min-w-8 items-center justify-center shadow-border-inner-br"
+            >
+              <Checkbox
+                props={{
+                  state:
+                    totalSelectedTransactionIds === 0
+                      ? false
+                      : totalSelectedTransactionIds === totalTransactions
+                        ? true
+                        : "indeterminate",
+                }}
+                on:click={transactionStore.toggleAllSelectedTransactionId}
+              />
+            </div>
 
-          {#each transactionTableTitles as { key, text, classes } (key)}
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            {#each transactionTableTitles as { key, text, classes } (key)}
+              <!-- svelte-ignore a11y-click-events-have-key-events -->
+              <!-- svelte-ignore a11y-no-static-element-interactions -->
+              <div
+                class={clsx(
+                  "flex cursor-pointer items-center gap-2 px-4",
+                  "hover:bg-accent-100",
+                  classes,
+                )}
+                on:click={async () => {
+                  transactionStore.sortTransactions(key);
+
+                  await tick();
+                }}
+              >
+                <span class="text-sm leading-none text-accent-950">{text}</span>
+
+                {#if orderByKey === key}
+                  <Icon
+                    props={{
+                      name:
+                        sortDirection === "ASC"
+                          ? "arrowDropUp"
+                          : "arrowDropDown",
+                      classes: clsx("size-5"),
+                    }}
+                  />
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
+
+        {#each $transactionStore.data as { id, code, totalStock, totalPrice, totalPriceInRupiah, transactionDate, transactionDateFormatted, transactionDetails } (id)}
+          <div
+            animate:flip={{
+              duration: 300,
+              easing: cubicInOut,
+            }}
+            in:fade={{
+              duration: 150,
+              easing: cubicInOut,
+            }}
+            out:fly={{
+              duration: 150,
+              x: "100%",
+              easing: cubicInOut,
+            }}
+            class="group/row flex min-h-[2.125rem] w-full shrink-0"
+          >
             <div
               class={clsx(
-                "flex cursor-pointer items-center gap-2 px-4",
-                "hover:bg-accent-100",
-                classes,
+                "flex min-w-8 items-center justify-center shadow-border-inner-br",
+                "hoverable:group-hover/row:bg-accent-100",
               )}
-              on:click={async () => {
-                transactionStore.sortTransactions(key);
-
-                await tick();
-              }}
             >
-              <span class="text-sm leading-none text-accent-950">{text}</span>
-
-              {#if orderByKey === key}
-                <Icon
-                  props={{
-                    name:
-                      sortDirection === "ASC" ? "arrowDropUp" : "arrowDropDown",
-                    classes: clsx("size-5"),
-                  }}
-                />
-              {/if}
+              <Checkbox
+                props={{
+                  state: $transactionStore.selectedTransactionIds.includes(id),
+                }}
+                on:click={() => {
+                  transactionStore.toggleSelectedTransactionId(id);
+                }}
+              />
             </div>
-          {/each}
-        </div>
-      {/if}
 
-      {#each $transactionStore.data as { id, code, totalStock, totalPrice, totalPriceInRupiah, transactionDate, transactionDateFormatted, transactionDetails } (id)}
-        <div
-          animate:flip={{
-            duration: 300,
-            easing: cubicInOut,
-          }}
-          in:fade={{
-            duration: 150,
-            easing: cubicInOut,
-          }}
-          out:fly={{
-            duration: 150,
-            x: "100%",
-            easing: cubicInOut,
-          }}
-          class={clsx(
-            "flex min-h-[2.125rem] w-full",
-            "hoverable:hover:bg-accent-100",
-          )}
-        >
-          <div
-            class="flex min-w-8 items-center justify-center shadow-border-inner-br"
-          >
-            <Checkbox
-              props={{
-                state: $transactionStore.selectedTransactionIds.includes(id),
-              }}
-              on:click={() => {
-                transactionStore.toggleSelectedTransactionId(id);
-              }}
-            />
-          </div>
-
-          <div
-            class="flex w-[calc((100%_-_2rem)_/_4_*_1)] min-w-[9.375rem] items-center px-4 py-2 shadow-border-inner-br"
-          >
-            <TransactionDetailDialog
-              props={{
-                id,
-                code,
-                totalStock,
-                totalPrice,
-                transactionDate,
-                transactionDetails,
-              }}
-            />
-          </div>
-
-          <div
-            class="flex w-[calc((100%_-_2rem)_/_4_*_1)] min-w-[9.875rem] items-center px-4 py-2 shadow-border-inner-br"
-          >
-            <span class="text-sm leading-none text-accent-800"
-              >{totalStock}</span
+            <div
+              class={clsx(
+                "flex w-[calc((100%_-_2rem)_/_4_*_0.8)] min-w-[8.125rem] items-center px-4 py-2 shadow-border-inner-br",
+                "hoverable:group-hover/row:bg-accent-100",
+              )}
             >
-          </div>
+              <TransactionDetailDialog
+                props={{
+                  id,
+                  code,
+                  totalStock,
+                  totalPrice,
+                  transactionDate,
+                  transactionDetails,
+                }}
+              />
+            </div>
 
-          <div
-            class="flex w-[calc((100%_-_2rem)_/_4_*_1)] min-w-[12.75rem] items-center px-4 py-2 shadow-border-inner-br"
-          >
-            <span class="text-sm leading-none text-accent-800"
-              >{totalPriceInRupiah}</span
+            <div
+              class={clsx(
+                "flex w-[calc((100%_-_2rem)_/_4_*_0.4)] min-w-[6.188rem] items-center px-4 py-2 shadow-border-inner-br",
+                "hoverable:group-hover/row:bg-accent-100",
+              )}
             >
-          </div>
+              <span class="text-sm leading-none text-accent-800"
+                >{totalStock}</span
+              >
+            </div>
 
-          <div
-            class="flex w-[calc((100%_-_2rem)_/_4_*_1)] min-w-[10.25rem] items-center px-4 py-2 shadow-border-inner-b"
-          >
-            <span class="text-sm leading-none text-accent-800"
-              >{transactionDateFormatted}</span
+            <div
+              class={clsx(
+                "flex w-[calc((100%_-_2rem)_/_4_*_1.2)] min-w-[9.688rem] items-center px-4 py-2 shadow-border-inner-br",
+                "hoverable:group-hover/row:bg-accent-100",
+              )}
             >
+              <span class="text-sm leading-none text-accent-800"
+                >{totalPriceInRupiah}</span
+              >
+            </div>
+
+            <div
+              class={clsx(
+                "flex w-[calc((100%_-_2rem)_/_4_*_1.6)] min-w-[9.5rem] items-center px-4 py-2 shadow-border-inner-b",
+                "hoverable:group-hover/row:bg-accent-100",
+              )}
+            >
+              <span class="text-sm leading-none text-accent-800"
+                >{transactionDateFormatted}</span
+              >
+            </div>
           </div>
-        </div>
-      {:else}
-        Tidak ada transaksi
-      {/each}
+        {:else}
+          Tidak ada transaksi
+        {/each}
+      </div>
 
       {#if total > 0}
         <footer
           bind:clientHeight={footerHeight}
           class={clsx(
-            "flex min-h-10 w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 overflow-auto bg-accent-100 px-4 py-2",
+            "flex min-h-10 w-full shrink-0 flex-wrap items-center justify-between gap-x-8 gap-y-4 bg-accent-100 px-4 py-2",
           )}
         >
           {#if totalSelectedTransactionIds > 0}
