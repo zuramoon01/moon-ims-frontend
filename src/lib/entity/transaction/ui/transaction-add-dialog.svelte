@@ -75,10 +75,11 @@
     listSelectedProducts[index].stock = stock;
   };
 
-  let processState: "idle" | "loading" = "idle";
+  let processState: { purchase: "idle" | "loading"; sale: "idle" | "loading" } =
+    { purchase: "idle", sale: "idle" };
   const submitTransaction = async (type: "purchase" | "sale") => {
     try {
-      if (processState === "idle") {
+      if (processState[type] === "idle") {
         if (listSelectedProducts.length === 0) {
           addToast({
             data: {
@@ -90,7 +91,7 @@
           return;
         }
 
-        processState = "loading";
+        processState[type] = "loading";
 
         const { status, data } = await apiMoonIMS.post(
           `${Route.Api.Transaction}/${type}`,
@@ -104,7 +105,7 @@
         if (!data.message) {
           console.error("Fungsi submitTransaction no message");
 
-          processState = "idle";
+          processState[type] = "idle";
 
           return;
         }
@@ -116,7 +117,7 @@
             "Fungsi submitTransaction status not 201 or data not found",
           );
 
-          processState = "idle";
+          processState[type] = "idle";
 
           return;
         }
@@ -138,7 +139,7 @@
 
         listSelectedProducts = [];
 
-        processState = "idle";
+        processState[type] = "idle";
 
         open.set(false);
       }
@@ -291,7 +292,8 @@
                   type: "button",
                   text: "Buat Transaksi Pembelian",
                   class: clsx("w-full", "mobile-l:w-auto"),
-                  loading: processState === "loading",
+                  disabled: processState["sale"] === "loading",
+                  loading: processState["purchase"] === "loading",
                 }}
                 on:click={() => {
                   submitTransaction("purchase");
@@ -303,7 +305,8 @@
                   type: "button",
                   text: "Buat Transaksi Penjualan",
                   class: clsx("w-full", "mobile-l:w-auto"),
-                  loading: processState === "loading",
+                  disabled: processState["purchase"] === "loading",
+                  loading: processState["sale"] === "loading",
                 }}
                 on:click={() => {
                   submitTransaction("sale");
