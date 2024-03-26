@@ -11,36 +11,40 @@
   let processState: "idle" | "loading" = "idle";
   const logout = async () => {
     try {
-      const { status, data } = await apiMoonIMS.post(`${Route.Api.Logout}`);
+      if (processState === "idle") {
+        processState = "loading";
 
-      if (!data.message) {
-        console.error("Fungsi logout no message");
+        const { status, data } = await apiMoonIMS.post(`${Route.Api.Logout}`);
+
+        if (!data.message) {
+          console.error("Fungsi logout no message");
+
+          processState = "idle";
+
+          return;
+        }
+
+        const message = messageSchema.parse(data.message);
+
+        if (status !== 200) {
+          console.error("Fungsi logout status not 200");
+
+          processState = "idle";
+
+          return;
+        }
+
+        addToast({
+          data: {
+            state: "Sukses",
+            description: message,
+          },
+        });
 
         processState = "idle";
 
-        return;
+        await goto(Route.Login);
       }
-
-      const message = messageSchema.parse(data.message);
-
-      if (status !== 200) {
-        console.error("Fungsi logout status not 200");
-
-        processState = "idle";
-
-        return;
-      }
-
-      addToast({
-        data: {
-          state: "Sukses",
-          description: message,
-        },
-      });
-
-      processState = "idle";
-
-      await goto(Route.Login);
     } catch (error) {
       handleError(error, "Fungsi logout");
     }

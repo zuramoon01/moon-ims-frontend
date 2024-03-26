@@ -13,38 +13,42 @@
   let processState: "idle" | "loading" = "idle";
   const login = async () => {
     try {
-      const { status, data } = await apiMoonIMS.post(`${Route.Api.Login}`, {
-        ...input,
-      });
+      if (processState === "idle") {
+        processState = "loading";
 
-      if (!data.message) {
-        console.error("Fungsi login Halaman Masuk no message");
+        const { status, data } = await apiMoonIMS.post(`${Route.Api.Login}`, {
+          ...input,
+        });
+
+        if (!data.message) {
+          console.error("Fungsi login Halaman Masuk no message");
+
+          processState = "idle";
+
+          return;
+        }
+
+        const message = messageSchema.parse(data.message);
+
+        if (status !== 200) {
+          console.error("Fungsi login Halaman Masuk status not 200");
+
+          processState = "idle";
+
+          return;
+        }
+
+        addToast({
+          data: {
+            state: "Sukses",
+            description: message,
+          },
+        });
 
         processState = "idle";
 
-        return;
+        await goto(Route.Product);
       }
-
-      const message = messageSchema.parse(data.message);
-
-      if (status !== 200) {
-        console.error("Fungsi login Halaman Masuk status not 200");
-
-        processState = "idle";
-
-        return;
-      }
-
-      addToast({
-        data: {
-          state: "Sukses",
-          description: message,
-        },
-      });
-
-      processState = "idle";
-
-      await goto(Route.Product);
     } catch (error) {
       handleError(error, "Fungsi login Halaman Masuk");
     }
