@@ -16,6 +16,7 @@ export type TransactionOrderByKey = keyof Omit<Transaction, "id">;
 type TransactionStore = {
   data: FormattedTransaction[];
   config: BaseConfig & ExtendedConfig<TransactionOrderByKey>;
+  selectedTransactionIds: Array<Transaction["id"]>;
 };
 
 const createTransactionStore = () => {
@@ -33,6 +34,7 @@ const createTransactionStore = () => {
       orderByKey: null,
       sortDirection: "DESC",
     },
+    selectedTransactionIds: [],
   });
 
   const formatTransaction = (
@@ -59,6 +61,7 @@ const createTransactionStore = () => {
     }: TransactionsWithConfig) => {
       update((currentState) => {
         return {
+          ...currentState,
           data: transactions.map((transaction) => {
             return formatTransaction(transaction);
           }),
@@ -71,6 +74,107 @@ const createTransactionStore = () => {
             limitInString: limit.toString(),
           },
         };
+      });
+    },
+    sortProducts: (key: TransactionOrderByKey) => {
+      update((currentState) => {
+        let {
+          config: { orderByKey, sortDirection },
+        } = currentState;
+
+        if (key !== orderByKey) {
+          orderByKey = key;
+          sortDirection = "DESC";
+        } else if (sortDirection === "ASC") {
+          orderByKey = null;
+          sortDirection = "DESC";
+        } else {
+          sortDirection = "ASC";
+        }
+
+        return {
+          ...currentState,
+          data: currentState.data.sort((a, b) => {
+            const [x, y] =
+              orderByKey === null
+                ? [a.id, b.id]
+                : [a[orderByKey], b[orderByKey]];
+
+            if (sortDirection === "ASC") {
+              return x < y ? -1 : x > y ? 1 : 0;
+            } else {
+              return x > y ? -1 : x < y ? 1 : 0;
+            }
+          }),
+          config: {
+            ...currentState.config,
+            orderByKey,
+            sortDirection,
+          },
+        };
+      });
+    },
+    toggleAllSelectedTransactionId: () => {
+      update((currentState) => {
+        const { data, selectedTransactionIds } = currentState;
+
+        if (
+          selectedTransactionIds.length >= 0 &&
+          selectedTransactionIds.length !== data.length
+        ) {
+          currentState.selectedTransactionIds = data.map(
+            (transaction) => transaction.id,
+          );
+        } else {
+          currentState.selectedTransactionIds = [];
+        }
+
+        return currentState;
+      });
+    },
+    removeAllSelectedTransactionId: () => {
+      update((currentState) => {
+        return { ...currentState, selectedTransactionIds: [] };
+      });
+    },
+    toggleSelectedTransactionId: (id: Transaction["id"]) => {
+      update((currentState) => {
+        const { selectedTransactionIds } = currentState;
+
+        currentState.selectedTransactionIds = selectedTransactionIds.includes(
+          id,
+        )
+          ? selectedTransactionIds.filter(
+              (transactionId) => transactionId !== id,
+            )
+          : [...selectedTransactionIds, id];
+
+        return currentState;
+      });
+    },
+    addSelectedTransactionId: (id: Transaction["id"]) => {
+      update((currentState) => {
+        const { selectedTransactionIds } = currentState;
+
+        const selectedId = selectedTransactionIds.find(
+          (transactionId) => transactionId === id,
+        );
+
+        if (selectedId === undefined) {
+          currentState.selectedTransactionIds = [...selectedTransactionIds, id];
+        }
+
+        return currentState;
+      });
+    },
+    removeSelectedTransactionId: (id: Transaction["id"]) => {
+      update((currentState) => {
+        currentState.selectedTransactionIds =
+          currentState.selectedTransactionIds.filter(
+            (transactionId) => transactionId !== id,
+          );
+
+        return currentState;
       });
     },
   };

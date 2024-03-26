@@ -5,7 +5,7 @@
   import { createDialog, melt } from "@melt-ui/svelte";
   import clsx from "clsx";
   import { apiMoonIMS } from "$lib/api";
-  import { productStore, productsWithConfigSchema } from "$lib/entity";
+  import { transactionStore, transactionsWithConfigSchema } from "$lib/entity";
   import { Button, Icon, addToast, generateButtonClasses } from "$lib/ui";
   import { Route, handleError, messageSchema } from "$lib/util";
 
@@ -22,28 +22,28 @@
     states: { open },
   } = createDialog();
 
-  const { getSearchParamsProductString } = getContext<{
-    getSearchParamsProductString: () => string;
-  }>("productContext");
+  const { getSearchParamsTransactionString } = getContext<{
+    getSearchParamsTransactionString: () => string;
+  }>("transactionContext");
 
   let processState: "idle" | "loading" = "idle";
-  const deleteProducts = async () => {
+  const deleteTransactions = async () => {
     try {
       if (processState === "idle") {
         processState = "loading";
 
-        const searchParamsProductString = getSearchParamsProductString();
+        const searchParamsProductString = getSearchParamsTransactionString();
 
         const { status, data } = await apiMoonIMS.delete(
-          `${Route.Api.Product}?${searchParamsProductString}`,
+          `${Route.Api.Transaction}?${searchParamsProductString}`,
           {
-            data: { ids: $productStore.selectedProductIds },
+            data: { ids: $transactionStore.selectedTransactionIds },
           },
         );
 
         if (!data.message) {
           console.error(
-            "Fungsi deleteProducts UI ProductConfirmationDeleteDialog no message",
+            "Fungsi deleteTransactions UI TransactionConfirmationDeleteDialog no message",
           );
 
           processState = "idle";
@@ -55,7 +55,7 @@
 
         if (status !== 200 || !data.data) {
           console.error(
-            "Fungsi deleteProducts UI ProductConfirmationDeleteDialog status not 200 or data not found",
+            "Fungsi deleteTransactions UI TransactionConfirmationDeleteDialog status not 200 or data not found",
           );
 
           processState = "idle";
@@ -63,10 +63,12 @@
           return;
         }
 
-        const productsWithConfig = productsWithConfigSchema.parse(data.data);
+        const transactionsWithConfig = transactionsWithConfigSchema.parse(
+          data.data,
+        );
 
-        productStore.setProductStore(productsWithConfig);
-        productStore.removeAllSelectedProductId();
+        transactionStore.setTransactionStore(transactionsWithConfig);
+        transactionStore.removeAllSelectedTransactionId();
 
         await tick();
 
@@ -112,7 +114,7 @@
               use:melt={$title}
               class="text-base font-semibold leading-none text-accent-950"
             >
-              Hapus Produk
+              Hapus Transaksi
             </h3>
 
             <button
@@ -134,9 +136,9 @@
             use:melt={$description}
             class="flex w-full flex-col text-sm leading-tight text-accent-950"
           >
-            <span>Yakin ingin menghapus produk yang terpilih?</span>
+            <span>Yakin ingin menghapus transaksi yang terpilih?</span>
             <span class="text-accent-500"
-              >* Produk yang dihapus tidak dapat dikembalikan lagi!</span
+              >* Transaksi yang dihapus tidak dapat dikembalikan lagi!</span
             >
           </p>
         </div>
@@ -164,11 +166,11 @@
               props={{
                 type: "button",
                 variant: "danger",
-                text: "Hapus Produk",
+                text: "Hapus Transaksi",
                 class: clsx("w-full", "mobile-l:w-auto"),
                 loading: processState === "loading",
               }}
-              on:click={deleteProducts}
+              on:click={deleteTransactions}
             />
           </div>
         </div>

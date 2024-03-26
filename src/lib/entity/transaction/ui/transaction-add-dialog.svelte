@@ -76,7 +76,7 @@
   };
 
   let processState: "idle" | "loading" = "idle";
-  const submitTransaction = async () => {
+  const submitTransaction = async (type: "purchase" | "sale") => {
     try {
       if (processState === "idle") {
         if (listSelectedProducts.length === 0) {
@@ -93,7 +93,7 @@
         processState = "loading";
 
         const { status, data } = await apiMoonIMS.post(
-          `${Route.Api.Transaction}/purchase`,
+          `${Route.Api.Transaction}/${type}`,
           {
             data: listSelectedProducts.map(({ id, stock }) => {
               return { id, quantity: stock };
@@ -135,6 +135,8 @@
             description: message,
           },
         });
+
+        listSelectedProducts = [];
 
         processState = "idle";
 
@@ -212,10 +214,7 @@
             </div>
           </div>
 
-          <form
-            class="flex w-full flex-col items-start gap-4"
-            on:submit|preventDefault={submitTransaction}
-          >
+          <form class="flex w-full flex-col items-start gap-4">
             <TransactionCombobox />
 
             <div
@@ -289,10 +288,25 @@
 
               <Button
                 props={{
-                  type: "submit",
-                  text: "Buat Transaksi",
+                  type: "button",
+                  text: "Buat Transaksi Pembelian",
                   class: clsx("w-full", "mobile-l:w-auto"),
                   loading: processState === "loading",
+                }}
+                on:click={() => {
+                  submitTransaction("purchase");
+                }}
+              />
+
+              <Button
+                props={{
+                  type: "button",
+                  text: "Buat Transaksi Penjualan",
+                  class: clsx("w-full", "mobile-l:w-auto"),
+                  loading: processState === "loading",
+                }}
+                on:click={() => {
+                  submitTransaction("sale");
                 }}
               />
             </div>
