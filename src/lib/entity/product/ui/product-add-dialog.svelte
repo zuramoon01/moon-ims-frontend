@@ -205,7 +205,7 @@
                   label: "Jumlah Produk",
                   type: "number",
                   id: "quantity",
-                  min: "1",
+                  min: "0",
                   required: true,
                 }}
                 bind:value={input.quantity}
