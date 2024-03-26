@@ -1,7 +1,8 @@
 import { AxiosError } from "axios";
 import { ZodError, z } from "zod";
 import { addToast } from "$lib/ui";
-import { messageSchema } from "$lib/util";
+import { Route, messageSchema } from "$lib/util";
+import { goto } from "$app/navigation";
 
 export const handleError = (error: unknown, message: string) => {
   console.error(`Error : ${message}`);
@@ -24,17 +25,26 @@ const handleAxiosError = ({
   if (response) {
     const { data, status, headers } = response;
 
-    if (status === 400) {
-      const { message } = z.object({ message: messageSchema }).parse(data);
+    const result = z.object({ message: messageSchema }).safeParse(data);
 
+    if (result.success) {
       addToast({
         data: {
           state: "Error",
-          description: message,
+          description: result.data.message,
         },
       });
-    } else {
-      console.error({ data, status, headers });
+    }
+
+    switch (status) {
+      case 400:
+        break;
+      case 401:
+        goto(Route.Login);
+        break;
+      default:
+        console.error({ data, status, headers });
+        break;
     }
   } else if (request) {
     console.error(request);

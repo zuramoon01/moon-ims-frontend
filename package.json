@@ -14,17 +14,19 @@
   },
   "dependencies": {
     "axios": "^1.6.8",
+    "jsonwebtoken": "^9.0.2",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@melt-ui/pp": "^0.3.0",
-    "@melt-ui/svelte": "^0.76.0",
+    "@melt-ui/svelte": "^0.76.2",
     "@sveltejs/adapter-auto": "^3.0.0",
     "@sveltejs/kit": "^2.5.4",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@types/eslint": "^8.56.6",
-    "@typescript-eslint/eslint-plugin": "^7.3.1",
-    "@typescript-eslint/parser": "^7.3.1",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@typescript-eslint/eslint-plugin": "^7.4.0",
+    "@typescript-eslint/parser": "^7.4.0",
     "autoprefixer": "^10.4.19",
     "clsx": "^2.1.0",
     "eslint": "^8.56.0",
@@ -41,7 +43,7 @@
     "tailwindcss": "^3.4.1",
     "tslib": "^2.4.1",
     "typescript": "^5.4.3",
-    "vite": "^5.2.3"
+    "vite": "^5.2.6"
   },
   "engines": {
     "node": ">=18.0.0"
