@@ -11,11 +11,12 @@
   import {
     TransactionAddDialog,
     TransactionConfirmationDeleteDialog,
+    TransactionDetailDialog,
     transactionStore,
     transactionTableTitles,
     transactionsWithConfigSchema,
   } from "$lib/entity";
-  import { Button, Checkbox, CircleLoader, Input } from "$lib/ui";
+  import { Button, Checkbox, CircleLoader, Icon, Input } from "$lib/ui";
   import { Route, handleError } from "$lib/util";
 
   let pageState: "idle" | "loading" = "loading";
@@ -226,31 +227,33 @@
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div
               class={clsx(
-                "flex cursor-pointer items-center gap-2 px-4 shadow-border-inner-br",
+                "flex cursor-pointer items-center gap-2 px-4",
                 "hover:bg-accent-100",
                 classes,
               )}
               on:click={async () => {
+                transactionStore.sortTransactions(key);
+
                 await tick();
               }}
             >
               <span class="text-sm leading-none text-accent-950">{text}</span>
 
-              <!-- {#if orderByKey === key}
-              <Icon
-                props={{
-                  name:
-                    sortDirection === "ASC" ? "arrowDropUp" : "arrowDropDown",
-                  classes: clsx("size-5"),
-                }}
-              />
-            {/if} -->
+              {#if orderByKey === key}
+                <Icon
+                  props={{
+                    name:
+                      sortDirection === "ASC" ? "arrowDropUp" : "arrowDropDown",
+                    classes: clsx("size-5"),
+                  }}
+                />
+              {/if}
             </div>
           {/each}
         </div>
       {/if}
 
-      {#each $transactionStore.data as { id, code, totalStock, totalPriceInRupiah, transactionDateFormatted } (id)}
+      {#each $transactionStore.data as { id, code, totalStock, totalPrice, totalPriceInRupiah, transactionDate, transactionDateFormatted, transactionDetails } (id)}
         <div
           animate:flip={{
             duration: 300,
@@ -286,7 +289,16 @@
           <div
             class="flex w-[calc((100%_-_2rem)_/_4_*_1)] min-w-[9.375rem] items-center px-4 py-2 shadow-border-inner-br"
           >
-            <span class="text-sm leading-none text-accent-800">{code}</span>
+            <TransactionDetailDialog
+              props={{
+                id,
+                code,
+                totalStock,
+                totalPrice,
+                transactionDate,
+                transactionDetails,
+              }}
+            />
           </div>
 
           <div
@@ -306,7 +318,7 @@
           </div>
 
           <div
-            class="flex w-[calc((100%_-_2rem)_/_4_*_1)] min-w-[10.25rem] items-center px-4 py-2 shadow-border-inner-br"
+            class="flex w-[calc((100%_-_2rem)_/_4_*_1)] min-w-[10.25rem] items-center px-4 py-2 shadow-border-inner-b"
           >
             <span class="text-sm leading-none text-accent-800"
               >{transactionDateFormatted}</span

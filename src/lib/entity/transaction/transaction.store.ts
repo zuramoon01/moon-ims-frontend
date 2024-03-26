@@ -76,7 +76,7 @@ const createTransactionStore = () => {
         };
       });
     },
-    sortProducts: (key: TransactionOrderByKey) => {
+    sortTransactions: (key: TransactionOrderByKey) => {
       update((currentState) => {
         let {
           config: { orderByKey, sortDirection },

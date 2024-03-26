@@ -6,6 +6,20 @@ export const transactionSchema = z.object({
   totalStock: z.number(),
   totalPrice: z.number(),
   transactionDate: z.coerce.date(),
+  transactionDetails: z.array(
+    z.object({
+      id: z.number(),
+      product: z.object({
+        name: z.string(),
+        quantity: z.number(),
+      }),
+      price: z.object({
+        buyPrice: z.number(),
+        sellPrice: z.number(),
+      }),
+      stock: z.number(),
+    }),
+  ),
 });
 export const transactionsSchema = z.array(transactionSchema);
 
