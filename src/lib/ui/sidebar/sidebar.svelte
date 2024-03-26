@@ -10,8 +10,8 @@
 
   let processState: "idle" | "loading" = "idle";
   const logout = async () => {
-    try {
-      if (processState === "idle") {
+    if (processState === "idle") {
+      try {
         processState = "loading";
 
         const { status, data } = await apiMoonIMS.post(`${Route.Api.Logout}`);
@@ -44,9 +44,10 @@
         processState = "idle";
 
         await goto(Route.Login);
+      } catch (error) {
+        processState = "idle";
+        handleError(error, "Fungsi logout");
       }
-    } catch (error) {
-      handleError(error, "Fungsi logout");
     }
   };
 </script>

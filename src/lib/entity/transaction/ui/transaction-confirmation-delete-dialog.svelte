@@ -28,8 +28,8 @@
 
   let processState: "idle" | "loading" = "idle";
   const deleteTransactions = async () => {
-    try {
-      if (processState === "idle") {
+    if (processState === "idle") {
+      try {
         processState = "loading";
 
         const searchParamsProductString = getSearchParamsTransactionString();
@@ -82,9 +82,10 @@
         processState = "idle";
 
         open.set(false);
+      } catch (error) {
+        processState = "idle";
+        handleError(error, "Fungsi deleteProducts Halaman Produk");
       }
-    } catch (error) {
-      handleError(error, "Fungsi deleteProducts Halaman Produk");
     }
   };
 </script>

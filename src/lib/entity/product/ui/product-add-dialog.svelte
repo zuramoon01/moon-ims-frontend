@@ -37,8 +37,8 @@
 
   let processState: "idle" | "loading" = "idle";
   const submitProduct = async () => {
-    try {
-      if (processState === "idle") {
+    if (processState === "idle") {
+      try {
         const { name, quantity, buyPrice, sellPrice } = input;
 
         if (!name || !quantity || !buyPrice || !sellPrice) {
@@ -110,9 +110,10 @@
           buyPrice: "",
           sellPrice: "",
         };
+      } catch (error) {
+        processState = "idle";
+        handleError(error, "Fungsi submitProduct UI ProductAddDialog");
       }
-    } catch (error) {
-      handleError(error, "Fungsi submitProduct UI ProductAddDialog");
     }
   };
 </script>

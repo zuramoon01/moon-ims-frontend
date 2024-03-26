@@ -78,8 +78,8 @@
   let processState: { purchase: "idle" | "loading"; sale: "idle" | "loading" } =
     { purchase: "idle", sale: "idle" };
   const submitTransaction = async (type: "purchase" | "sale") => {
-    try {
-      if (processState[type] === "idle") {
+    if (processState[type] === "idle") {
+      try {
         if (listSelectedProducts.length === 0) {
           addToast({
             data: {
@@ -142,9 +142,10 @@
         processState[type] = "idle";
 
         open.set(false);
+      } catch (error) {
+        processState[type] = "idle";
+        handleError(error, "Fungsi submitTransaction");
       }
-    } catch (error) {
-      handleError(error, "Fungsi submitTransaction");
     }
   };
 </script>

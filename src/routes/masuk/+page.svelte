@@ -12,8 +12,8 @@
 
   let processState: "idle" | "loading" = "idle";
   const login = async () => {
-    try {
-      if (processState === "idle") {
+    if (processState === "idle") {
+      try {
         processState = "loading";
 
         const { status, data } = await apiMoonIMS.post(`${Route.Api.Login}`, {
@@ -45,12 +45,14 @@
           },
         });
 
+        await goto(Route.Product);
+
+        processState = "idle";
+      } catch (error) {
         processState = "idle";
 
-        await goto(Route.Product);
+        handleError(error, "Fungsi login Halaman Masuk");
       }
-    } catch (error) {
-      handleError(error, "Fungsi login Halaman Masuk");
     }
   };
 </script>

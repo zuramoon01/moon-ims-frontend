@@ -35,8 +35,8 @@
 
   let processState: "idle" | "loading" = "idle";
   const submitProduct = async () => {
-    try {
-      if (processState === "idle") {
+    if (processState === "idle") {
+      try {
         const { id, name, quantity, buyPrice, sellPrice } = input;
 
         if (!name || !quantity || !buyPrice || !sellPrice) {
@@ -120,9 +120,10 @@
         processState = "idle";
 
         open.set(false);
+      } catch (error) {
+        processState = "idle";
+        handleError(error, "Fungsi submitProduct UI ProductUpdateDialog");
       }
-    } catch (error) {
-      handleError(error, "Fungsi submitProduct UI ProductUpdateDialog");
     }
   };
 </script>
