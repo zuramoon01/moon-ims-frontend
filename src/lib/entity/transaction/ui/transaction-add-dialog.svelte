@@ -6,7 +6,13 @@
     transactionStore,
     transactionsWithConfigSchema,
   } from "$lib/entity";
-  import { Button, Icon, addToast, generateButtonClasses } from "$lib/ui";
+  import {
+    Button,
+    Icon,
+    Input,
+    addToast,
+    generateButtonClasses,
+  } from "$lib/ui";
   import { Route, handleError, messageSchema } from "$lib/util";
   import { createDialog, melt } from "@melt-ui/svelte";
   import clsx from "clsx";
@@ -91,14 +97,30 @@
           return;
         }
 
+        const dataProducts = listSelectedProducts
+          .filter(({ stock }) => stock > 0)
+          .map(({ id, stock }) => {
+            return { id, quantity: stock };
+          });
+
+        if (dataProducts.length === 0) {
+          addToast({
+            data: {
+              state: "Peringatan",
+              description:
+                "Terdapat produk yang bernilai kurang dari atau sama dengan 0 (nol).",
+            },
+          });
+
+          return;
+        }
+
         processState[type] = "loading";
 
         const { status, data } = await apiMoonIMS.post(
           `${Route.Api.Transaction}/${type}`,
           {
-            data: listSelectedProducts.map(({ id, stock }) => {
-              return { id, quantity: stock };
-            }),
+            data: dataProducts,
           },
         );
 
@@ -247,11 +269,17 @@
                       }}
                     />
 
-                    <div class="flex w-8 shrink-0 items-center justify-center">
-                      <span class="text-base font-medium leading-none"
-                        >{stock}</span
-                      >
-                    </div>
+                    <Input
+                      props={{
+                        type: "number",
+                        min: "1",
+                        class: clsx(
+                          "items-center px-2 h-[1.875rem] text-center",
+                        ),
+                        containerClasses: clsx("w-8 shrink-0"),
+                      }}
+                      bind:value={stock}
+                    />
 
                     <Button
                       props={{
