@@ -246,7 +246,10 @@
             >
               {#each listSelectedProducts as { id, name, quantity, stock }, index (id)}
                 <div
-                  class="flex w-full items-center justify-between gap-4 rounded p-4 shadow-border-inner"
+                  class={clsx(
+                    "flex w-full flex-col items-start gap-4 overflow-scroll rounded p-4 shadow-border-inner",
+                    "tablet:flex-row tablet:items-center tablet:justify-between",
+                  )}
                 >
                   <div class="flex flex-col items-start gap-2">
                     <h3 class="text-base font-medium leading-none">{name}</h3>
@@ -276,7 +279,7 @@
                         class: clsx(
                           "items-center px-2 h-[1.875rem] text-center",
                         ),
-                        containerClasses: clsx("w-8 shrink-0"),
+                        containerClasses: clsx("w-16 shrink-0"),
                       }}
                       bind:value={stock}
                     />
@@ -301,7 +304,7 @@
             <div
               class={clsx(
                 "flex w-full flex-col items-center justify-end gap-x-4 gap-y-2 pt-4",
-                "mobile-l:flex-row",
+                "table:flex-row",
               )}
             >
               <Button
@@ -309,7 +312,7 @@
                   type: "button",
                   variant: "outline",
                   text: "Batalkan",
-                  class: clsx("w-full", "mobile-l:w-auto"),
+                  class: clsx("w-full", "table:w-auto"),
                 }}
                 on:click={() => {
                   open.set(false);
@@ -320,7 +323,7 @@
                 props={{
                   type: "button",
                   text: "Buat Transaksi Pembelian",
-                  class: clsx("w-full", "mobile-l:w-auto"),
+                  class: clsx("w-full", "table:w-auto"),
                   disabled: processState["sale"] === "loading",
                   loading: processState["purchase"] === "loading",
                 }}
@@ -333,7 +336,7 @@
                 props={{
                   type: "button",
                   text: "Buat Transaksi Penjualan",
-                  class: clsx("w-full", "mobile-l:w-auto"),
+                  class: clsx("w-full", "table:w-auto"),
                   disabled: processState["purchase"] === "loading",
                   loading: processState["sale"] === "loading",
                 }}
