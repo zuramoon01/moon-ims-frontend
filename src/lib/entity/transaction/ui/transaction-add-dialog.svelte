@@ -98,9 +98,9 @@
         }
 
         const dataProducts = listSelectedProducts
-          .filter(({ stock }) => stock > 0)
+          .filter(({ stock }) => Number(stock) > 0)
           .map(({ id, stock }) => {
-            return { id, quantity: stock };
+            return { id, quantity: Number(stock) };
           });
 
         if (dataProducts.length === 0) {
